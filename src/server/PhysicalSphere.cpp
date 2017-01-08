@@ -31,7 +31,6 @@ PhysicalSphere::PhysicalSphere(btScalar radius, btScalar mass, btVector3 fallIne
     mCollisionShape->calculateLocalInertia(mass, fallInertia);
     mMotionState = new btDefaultMotionState(startTrans, centerOfMassOffset);
     mConstructionInfo = new btRigidBody::btRigidBodyConstructionInfo(mass, mMotionState, mCollisionShape, fallInertia);
-    mConstructionInfo->m_restitution = 0.2f;
 
     mRigidBody = new btRigidBody(*mConstructionInfo);
     Register();

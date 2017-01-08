@@ -18,5 +18,9 @@
 
 class Constraint
 {
+    friend class PhysicalManager;
+
+public:
+
 
 };

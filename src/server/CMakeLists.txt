@@ -23,8 +23,6 @@ set(SERVER_SRC
         Brain.h
         Brain.cpp
 
-        DebugDrawer.h
-        DebugDrawer.cpp
         PhysicalManager.h
         PhysicalManager.cpp
         PhysicalOwner.h
@@ -44,6 +42,19 @@ set(SERVER_SRC
         Drawable.h
         Entity.h
         Entity.cpp
-
-        PARENT_SCOPE
 )
+
+if (DEBUG_DRAW_SERVER MATCHES OFF)
+    set(SERVER_SRC
+            ${SERVER_SRC}
+
+            PARENT_SCOPE
+    )
+else ()
+    set(SERVER_SRC
+            ${SERVER_SRC}
+            DebugDrawer.h
+            DebugDrawer.cpp
+            PARENT_SCOPE
+    )
+endif()

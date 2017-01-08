@@ -33,7 +33,8 @@ DebugDrawer::DebugDrawer()
 {
     REPORT();
 
-    setDebugMode(0);
+//    setDebugMode(0);
+    setDebugMode(DBG_MAX_DEBUG_DRAW_MODE);
 //    mNextDebugMode = 0;
 
 //    mDebugMode = DBG_MAX_DEBUG_DRAW_MODE;

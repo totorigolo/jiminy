@@ -57,6 +57,9 @@ public: // TODO !
     btCollisionDispatcher *mDispatcher;
     btSequentialImpulseConstraintSolver *mSolver;
     btDiscreteDynamicsWorld *mDynamicsWorld;
-    DebugDrawer *mDebugDrawer;
     std::vector<Physical3DPrimitive *> m3DPrimitives;
+
+#ifdef DEBUG_DRAW
+    DebugDrawer *mDebugDrawer;
+#endif
 };

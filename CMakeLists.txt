@@ -18,11 +18,20 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -Werror")
 # Dependancies
 set(EXTRA_LIBS
         pthread
-        sfml-system
-        sfml-window
         GLEW
         GL
 )
+
+### SFML
+set(DEBUG_DRAW_SERVER OFF)
+if (DEBUG_DRAW_SERVER MATCHES ON)
+    set(EXTRA_LIBS
+            ${EXTRA_LIBS}
+            sfml-system
+            sfml-window
+    )
+    add_definitions(-DDEBUG_DRAW)
+endif()
 
 ### OpenGL
 find_package(OpenGL REQUIRED)

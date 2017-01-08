@@ -34,5 +34,5 @@ protected:
 
 protected:
     bool mRegistered;
-    btRigidBody *mRigidBody;
+public: btRigidBody *mRigidBody;
 };

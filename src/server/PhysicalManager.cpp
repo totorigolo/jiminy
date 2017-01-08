@@ -43,9 +43,11 @@ PhysicalManager::PhysicalManager()
     mDynamicsWorld->setGravity(btVector3(0, GRAVITY, 0));
 
     // Debug draw
+#ifdef DEBUG_DRAW
     mDebugDrawer = new DebugDrawer();
     mDynamicsWorld->setDebugDrawer(mDebugDrawer);
 //    mDebugDrawer->setDebugMode(btIDebugDraw::DBG_DrawWireframe);
+#endif
 }
 
 PhysicalManager::~PhysicalManager()
@@ -63,7 +65,9 @@ PhysicalManager::~PhysicalManager()
     delete mDispatcher;
     delete mCollisionConfiguration;
     delete mBroadphase;
+#ifdef DEBUG_DRAW
     delete mDebugDrawer;
+#endif
 }
 
 void PhysicalManager::RegisterObject(Physical3DPrimitive *primitive3D)
@@ -100,17 +104,23 @@ void PhysicalManager::Step()
 
 void PhysicalManager::EnableDebugDraw(int debugMode)
 {
+#ifdef DEBUG_DRAW
     mDebugDrawer->setDebugMode(debugMode);
+#endif
 }
 
 void PhysicalManager::DisableDebugDraw()
 {
+#ifdef DEBUG_DRAW
     mDebugDrawer->setDebugMode(0);
+#endif
 }
 
 void PhysicalManager::DebugDraw()
 {
 //    REPORT();
 
+#ifdef DEBUG_DRAW
     mDebugDrawer->render(mDynamicsWorld);
+#endif
 }
