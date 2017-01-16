@@ -55,8 +55,6 @@ int main()
                 packetReception >> rectangle;
                 rectangle.setPosition(x, y);
                 listRectangle.push_back(rectangle); 
-                
-                
             }
         }
         // effacement de la fenêtre en noir

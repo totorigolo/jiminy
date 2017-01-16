@@ -4,6 +4,7 @@
 #include <string>
 #include "server.h"
 #include <thread> 
+#include <map>
 
 #include <fstream>
 #include <boost/archive/text_oarchive.hpp>
@@ -19,8 +20,9 @@ void clientListening(sf::TcpSocket& client);
 
 int main()
 {
-    
+    int nbSocketCree=0;
     sf::TcpListener listener;
+    std::map<int, sf::TcpSocket> client;
 
     // lie l'écouteur à un port
     if (listener.listen(5001) != sf::Socket::Done)
@@ -31,13 +33,14 @@ int main()
     while(true)
     {
         // accepte une nouvelle connexion
-        sf::TcpSocket client;
-        if (listener.accept(client) != sf::Socket::Done)
+        if (listener.accept(client[nbSocketCree]) != sf::Socket::Done)
         {
-            std::cerr << "Erreur 2" << std::endl;
+            std::cerr << "Erreur 2 (main)" << std::endl;
+            continue;
         }
-        std::thread threadSocket(clientListening, std::ref(client));
+        std::thread threadSocket(clientListening, std::ref(client[nbSocketCree]));
         threadSocket.detach();//parceque join() c'est pour les faibles ;)
+        nbSocketCree++;
     }
     std::cerr << "Vous êtes sorti d'un while(true), bravo !" << std::endl;
     return 0;
@@ -46,22 +49,19 @@ int main()
 
 void clientListening(sf::TcpSocket& client)
 {
-    std::cout << "Création nouveau thread !" << std::endl;
     sf::RectangleShape rectangle(sf::Vector2f(120, 50));
     sf::Packet packetReception;
     sf::Packet packetEnvoie;
     std::string str("");
     
-    while(true)
+    while(true)//À modifier, tant que client existe
     {
-        std::cerr << "Erreur 1" << std::endl;
         if (client.receive(packetReception) != sf::Socket::Done)
         {
-            std::cerr << "Erreur 2" << std::endl;
+            std::cerr << "Erreur réception rectangle !" << std::endl;
             break;
         }
         packetReception >> str;
-        std::cout << str << std::endl;
         //--------------------------------------- test serializable
 //         std::ofstream ofs("filename");
 //         {
@@ -73,10 +73,9 @@ void clientListening(sf::TcpSocket& client)
         //---------------------------------------
         packetEnvoie << rectangle;
         if (client.send(packetEnvoie) != sf::Socket::Done){
-            std::cerr << "Erreur transmission rectangle" << std::endl;
+            std::cerr << "Erreur transmission rectangle !" << std::endl;
         }
     }
-    std::cerr << "Suppression d'un Thread" << std::endl;
 }
 
 
