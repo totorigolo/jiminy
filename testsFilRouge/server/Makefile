@@ -1,7 +1,7 @@
 CXX=g++
-CXXFLAGS=-Og -g -DMAP
+CXXFLAGS=-Og -g -DMAP -std=c++11
 LD=g++
-LDFLAGS=-lsfml-graphics -lsfml-window -lsfml-system -lsfml-network
+LDFLAGS=-lsfml-graphics -lsfml-window -lsfml-system -lsfml-network -lpthread
 SRC=server.cpp
 OBJ=$(SRC:.cpp=.o)
 EXE=ExecutezMoi
