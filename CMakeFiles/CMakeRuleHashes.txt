@@ -1,0 +1,3 @@
+# Hashes of file build rules.
+9fc9d957522801dc965fd8d2823f4c18 CMakeFiles/jiminy_client_automoc
+7ae91c2687fcae22cb754fab98a7407b CMakeFiles/jiminy_server_automoc
