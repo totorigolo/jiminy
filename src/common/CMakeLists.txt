@@ -3,9 +3,10 @@ project(Jiminy)
 
 set(COMMON_SRC
         Singleton.h
-
         DebugTools.h
-        DebugTools.cpp
+        Console.h
+
+        empty.cpp
 
         PARENT_SCOPE
 )

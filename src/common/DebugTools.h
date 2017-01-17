@@ -16,21 +16,21 @@
 
 #pragma once
 
-#include <string>
+#ifdef MAP
+#define REPORT_BEGIN std::cout << BLE "## Beggining of " << __PRETTY_FUNCTION__ << " ##" RESET << std::endl
+#define REPORT_END std::cout << JAU "## End of " << __PRETTY_FUNCTION__ << " ##" RESET << std::endl
 
+#ifdef MAP_EXTRA
+#define REPORT_BEGIN_EXTRA IF_MAP_DECLARER_DEBUT
+#define REPORT_END_EXTRA IF_MAP_DECLARER_FIN
+#else
+#define REPORT_BEGIN_EXTRA ;
+#define REPORT_END_EXTRA ;
+#endif
 
-class FunctionReporter
-{
-    static int scope_counter; // not thread aware
-
-public:
-    FunctionReporter(const char *functionName);
-
-    virtual ~FunctionReporter();
-
-private:
-    std::string mName;
-};
-
-// TODO: We only want report in debug build environment
-#define REPORT() FunctionReporter __decf_debug_info(__PRETTY_FUNCTION__)
+#else
+#define REPORT_BEGIN ;
+#define REPORT_END ;
+#define REPORT_BEGIN_EXTRA ;
+#define REPORT_END_EXTRA ;
+#endif

@@ -21,6 +21,8 @@
 
 int main()
 {
+    std::ios_base::sync_with_stdio(false);
+
     try
     {
         Simulation simulation;
@@ -28,7 +30,7 @@ int main()
     }
     catch (std::exception e)
     {
-        std::cerr << "A fatal unhandled exception happened :" << std::endl;
+        std::cerr << "An unhandled fatal exception just happened:" << std::endl;
         std::cerr << e.what() << std::endl;
     }
 

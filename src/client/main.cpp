@@ -13,25 +13,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Jiminy.  If not, see <http://www.gnu.org/licenses/>.
 
-
-#include <QtWidgets>
-
-#include "MainWindow.h"
-
+#include <iostream>
 
 int main(int argc, char *argv[])
 {
-    QApplication app(argc, argv);
+    std::cout << "Hello, Jiminy!" << std::endl;
 
-    QSurfaceFormat format;
-    format.setDepthBufferSize(24);
-    format.setStencilBufferSize(8);
-    format.setVersion(4, 0);
-    format.setProfile(QSurfaceFormat::CoreProfile);
-    QSurfaceFormat::setDefaultFormat(format);
-
-    MainWindow window;
-    window.show();
-
-    return app.exec();
+    return 0;
 }

@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <memory>
 #include <thread>
 #include <atomic>
 
@@ -39,8 +40,6 @@ private:
 private:
     std::atomic_bool mSimulating;
 
-    std::thread *mSimulationThread;
-    std::thread *mCommandLineThread;
-
-    World *mWorld;
+    std::unique_ptr<std::thread> mSimulationThread;
+    std::unique_ptr<std::thread> mCommandLineThread;
 };

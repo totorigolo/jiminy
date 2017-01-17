@@ -20,84 +20,166 @@
 #include <thread>
 #include <iostream>
 
-#include "Simulation.h"
-#include "World.h"
-#include "PhysicalManager.h"
-#include "DebugTools.h"
+#include <SFML/Graphics.hpp>
+#include <Box2D/Box2D.h>
 
-#include "PhysicalSphere.h"
+#include "Simulation.h"
+#include "DebugTools.h"
+#include "Limb.h"
+#include "DebugDraw.h"
 
 
 using namespace std::chrono_literals;
 
 
 Simulation::Simulation()
-        : mSimulating(false),
-          mSimulationThread(nullptr), mCommandLineThread(nullptr)
+        : mSimulating{false},
+          mSimulationThread{}, mCommandLineThread{}
 {
-    REPORT();
+    REPORT_BEGIN
 
-    mWorld = new World;
+    REPORT_END
 }
 
 Simulation::~Simulation()
 {
-    REPORT();
+    REPORT_BEGIN
 
     mSimulating = false;
 
-    if (mSimulationThread->joinable())
+    if (mSimulationThread && mSimulationThread->joinable())
         mSimulationThread->join();
-    if (mCommandLineThread->joinable())
+    if (mCommandLineThread && mCommandLineThread->joinable())
         mCommandLineThread->join();
 
-    delete mWorld;
+    REPORT_END
 }
 
 int Simulation::run()
 {
-    REPORT();
-
-//    PhysicalManager::Instance().EnableDebugDraw();
+    REPORT_BEGIN
 
     mSimulating = true;
 
-    mSimulationThread = new std::thread(&Simulation::simulate, this);
-    mCommandLineThread = new std::thread(&Simulation::listenCommandLine, this);
+    mSimulationThread = std::make_unique<std::thread>(&Simulation::simulate, this);
+    mCommandLineThread = std::make_unique<std::thread>(&Simulation::listenCommandLine, this);
 
     if (mSimulationThread->joinable())
         mSimulationThread->join();
     if (mCommandLineThread->joinable())
         mCommandLineThread->join();
 
+    REPORT_END
     return 0;
 }
 
 bool Simulation::isSimulating() const
 {
+    REPORT_BEGIN_EXTRA
+
+    REPORT_END
     return mSimulating;
 }
 
 void Simulation::simulate()
 {
-    REPORT();
+    REPORT_BEGIN
 
-    mWorld->createBullshit();
+    sf::RenderWindow window(sf::VideoMode(800, 600), "Window");
+    window.setFramerateLimit(30); // TODO: Better framerate control
+    sf::View view(window.getDefaultView());
+    window.setView(view);
+    float currentZoom{1.f};
 
-    while (isSimulating())
+    // Create things
+    b2Vec2 gravity(0.0f, 10.f);
+    b2World world(gravity);
+
+    // Ground
+    b2BodyDef groundBodyDef;
+    groundBodyDef.position.Set(4.0f, 8.f);
+    b2Body *groundBody = world.CreateBody(&groundBodyDef);
+    b2PolygonShape groundBox;
+    groundBox.SetAsBox(6.0f, 0.02f);
+    b2FixtureDef groundFixtureDef;
+    groundFixtureDef.shape = &groundBox;
+
+    // Circle
+    b2BodyDef bodyDef;
+    bodyDef.type = b2_dynamicBody;
+    bodyDef.position.Set(4.0f, 0.0f);
+    b2CircleShape dynamicCircle;
+    dynamicCircle.m_p.Set(1.0f, 1.0f);
+    dynamicCircle.m_radius = 0.4f;
+    b2FixtureDef fixtureDef;
+    fixtureDef.shape = &dynamicCircle;
+    fixtureDef.density = 1.0f;
+    fixtureDef.friction = 0.3f;
+
+    // Create limbs
+    Limb ground{groundBodyDef, groundFixtureDef, world};
+    Limb head{bodyDef, fixtureDef, world};
+
+    DebugDraw debugDraw(&world);
+    debugDraw.SetRenderTarget(&window);
+    world.SetDebugDraw(&debugDraw);
+
+    // Loop
+    sf::Vector2i prevMousePos{};
+    while (isSimulating() && window.isOpen())
     {
-        mWorld->OnLogic();
+        // Events
+        sf::Event event;
+        while (window.pollEvent(event))
+        {
+            if (event.type == sf::Event::Closed)
+                window.close();
+            if (event.type == sf::Event::MouseWheelScrolled)
+            {
+                constexpr float zoomFactor = 1.2f;
+                currentZoom *= (event.mouseWheelScroll.delta < 0) ? zoomFactor : 1.f / zoomFactor;
+                view.zoom((event.mouseWheelScroll.delta < 0) ? zoomFactor : 1.f / zoomFactor);
+                window.setView(view);
+            }
+            if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::R)
+            {
+                view = window.getDefaultView();
+                currentZoom = 1.f;
+                window.setView(view);
+            }
+        }
+        if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
+        {
+            view.move(sf::Vector2f(prevMousePos - sf::Mouse::getPosition(window)) * currentZoom);
+            window.setView(view);
+        }
+        prevMousePos = sf::Mouse::getPosition(window);
 
-        PhysicalManager::Instance().DebugDraw();
+        // Physics
+        float32 timeStep = 1.0f / 60.0f;
+        int32 velocityIterations = 6;
+        int32 positionIterations = 2;
+        world.Step(timeStep, velocityIterations, positionIterations);
 
-        // TODO: Better framerate control
-        std::this_thread::sleep_for(20ms);
+        // Display
+        window.clear(sf::Color::Black);
+
+        window.draw(ground);
+        window.draw(head);
+
+        world.DrawDebugData();
+
+        window.display();
     }
+
+    mSimulating = false;
+
+    REPORT_END
 }
 
 void Simulation::listenCommandLine()
 {
-    REPORT();
+    REPORT_BEGIN
 
     std::string line, action;
     while (isSimulating())
@@ -122,23 +204,16 @@ void Simulation::listenCommandLine()
             ss >> param;
             if (param == "on" || param == "1")
             {
-                PhysicalManager::Instance().EnableDebugDraw();
+//                PhysicalManager::Instance().EnableDebugDraw();
             }
             else if (param == "off" || param == "0")
             {
-                PhysicalManager::Instance().DisableDebugDraw();
+//                PhysicalManager::Instance().DisableDebugDraw();
             }
             else
             {
                 std::cout << "Parameter \"" << param << "\" unknown. Choose among: on, off or 0, 1." << std::endl;
             }
-        }
-        else if (action == "sphere" || action == "s")
-        {
-            btScalar r, x, y, z;
-            ss >> r >> x >> y >> z;
-
-            new PhysicalSphere(r, 1, {0, 0, 0}, btTransform(btQuaternion(0, 0, 0, 1), btVector3(x, y, z)));
         }
         else
         {
@@ -146,4 +221,6 @@ void Simulation::listenCommandLine()
             std::cout << "Type \"help\" to know the available commands." << std::endl;
         }
     }
+
+    REPORT_END
 }
