@@ -4,16 +4,16 @@ project(Jiminy)
 set(SERVER_SRC
         main.cpp
 
-        Simulation.h
+        Simulation.hpp
         Simulation.cpp
 
-        Entity.h
+        Entity.hpp
         Entity.cpp
 
-        Limb.h
+        Limb.hpp
         Limb.cpp
 
-        DebugDraw.h
+        DebugDraw.hpp
         DebugDraw.cpp
 
         sf2b2.hpp

@@ -16,12 +16,12 @@
 
 #include <iostream>
 
-#include "Simulation.h"
+#include "Simulation.hpp"
 
 
 int main()
 {
-    std::ios_base::sync_with_stdio(false);
+    srand((unsigned int) (time(NULL)));
 
     try
     {

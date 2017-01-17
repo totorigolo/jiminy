@@ -23,10 +23,11 @@
 #include <SFML/Graphics.hpp>
 #include <Box2D/Box2D.h>
 
-#include "Simulation.h"
-#include "DebugTools.h"
-#include "Limb.h"
-#include "DebugDraw.h"
+#include "Simulation.hpp"
+#include "DebugTools.hpp"
+#include "DebugDraw.hpp"
+#include "Entity.hpp"
+#include "Limb.hpp"
 
 
 using namespace std::chrono_literals;
@@ -103,6 +104,7 @@ void Simulation::simulate()
     groundBox.SetAsBox(6.0f, 0.02f);
     b2FixtureDef groundFixtureDef;
     groundFixtureDef.shape = &groundBox;
+    groundFixtureDef.restitution = 0.4f;
 
     // Circle
     b2BodyDef bodyDef;
@@ -117,8 +119,9 @@ void Simulation::simulate()
     fixtureDef.friction = 0.3f;
 
     // Create limbs
-    Limb ground{groundBodyDef, groundFixtureDef, world};
-    Limb head{bodyDef, fixtureDef, world};
+    std::shared_ptr<Entity> entity = std::make_shared<Entity>();
+    Limb ground{entity, groundBodyDef, groundFixtureDef, world};
+    Limb head{entity, bodyDef, fixtureDef, world};
 
     DebugDraw debugDraw(&world);
     debugDraw.SetRenderTarget(&window);
@@ -164,15 +167,13 @@ void Simulation::simulate()
         // Display
         window.clear(sf::Color::Black);
 
-        window.draw(ground);
-        window.draw(head);
-
         world.DrawDebugData();
 
         window.display();
     }
 
     mSimulating = false;
+    exit(0);
 
     REPORT_END
 }

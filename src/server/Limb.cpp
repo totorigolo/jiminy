@@ -16,65 +16,16 @@
 #include <cassert>
 #include <iostream>
 
-#include "Limb.h"
-#include "sf2b2.hpp"
+#include "Limb.hpp"
 
 
-Limb::Limb(b2BodyDef bodyDef, b2FixtureDef fixtureDef, b2World &b2World) :
-        mb2Body{b2World.CreateBody(&bodyDef)}
+Limb::Limb(std::weak_ptr<Entity> entity, b2BodyDef bodyDef, b2FixtureDef fixtureDef, b2World &b2World) :
+        mEntity(entity), mb2Body{b2World.CreateBody(&bodyDef)}
 {
     assert(fixtureDef.shape && "There must be a shape attached to the fixtureDef.");
 
     mb2Body->CreateFixture(&fixtureDef);
     mb2Body->SetUserData(this);
-
-    switch (fixtureDef.shape->m_type)
-    {
-        case b2Shape::e_circle:
-            mShape = std::make_unique<sf::CircleShape>(fixtureDef.shape->m_radius * PPM);
-            break;
-        case b2Shape::e_polygon:
-        {
-            mShape = std::make_unique<sf::ConvexShape>();
-            b2PolygonShape *polyShape{(b2PolygonShape *) fixtureDef.shape};
-            sf::ConvexShape *convex{(sf::ConvexShape *) mShape.get()};
-            convex->setPointCount((size_t) polyShape->m_count);
-            for (size_t i = 0; i < convex->getPointCount(); ++i)
-            {
-                convex->setPoint(i, convert(polyShape->GetVertex((int32) i)));
-            }
-        }
-            break;
-        default:
-            throw std::runtime_error("Unhandled shape");
-    }
-
-    switch (bodyDef.type)
-    {
-        case b2_dynamicBody:
-            mShape->setFillColor(sf::Color::Green);
-            break;
-        case b2_staticBody:
-            mShape->setFillColor(sf::Color::Red);
-            break;
-        case b2_kinematicBody:
-            mShape->setFillColor(sf::Color::Magenta);
-            break;
-    }
-}
-
-void Limb::draw(sf::RenderTarget &target, sf::RenderStates states) const
-{
-    if (mShape && mb2Body)
-    {
-        if (mb2Body->GetFixtureList()->GetShape()->m_type == b2Shape::e_circle)
-            mShape->setPosition(convert(mb2Body->GetPosition())
-                                + sf::Vector2f(mShape->getLocalBounds().width, mShape->getLocalBounds().height) / 2.f);
-        else
-            mShape->setPosition(convert(mb2Body->GetPosition()));
-
-        target.draw(*mShape, states);
-    }
 }
 
 std::ostream &operator<<(std::ostream &os, const Limb &l)

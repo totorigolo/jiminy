@@ -17,14 +17,18 @@
 
 #include <vector>
 
-#include "Limb.h"
+#include <SFML/Graphics/Color.hpp>
+
+#include "Limb.hpp"
 
 class Entity
 {
 public:
+    Entity();
 
 private:
     // proprio
+    sf::Color mColor;
     // cerveau
     std::vector<Limb> mLimbs;
 };

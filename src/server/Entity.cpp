@@ -13,4 +13,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Jiminy.  If not, see <http://www.gnu.org/licenses/>.
 
-#include "Entity.h"
+#include "Entity.hpp"
+
+
+Entity::Entity() :
+    mColor{sf::Uint8(rand() % 256), sf::Uint8(rand() % 256), sf::Uint8(rand() % 256)}
+{
+
+}

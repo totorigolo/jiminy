@@ -14,9 +14,13 @@
 // along with Jiminy.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <iostream>
+#include <ctime>
+
 
 int main(int argc, char *argv[])
 {
+    srand((unsigned int) (time(NULL)));
+
     std::cout << "Hello, Jiminy!" << std::endl;
 
     return 0;

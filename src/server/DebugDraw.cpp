@@ -13,7 +13,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Jiminy.  If not, see <http://www.gnu.org/licenses/>.
 
-#include "DebugDraw.h"
+#include "DebugDraw.hpp"
 #include "sf2b2.hpp"
 
 

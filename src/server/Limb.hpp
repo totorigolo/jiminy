@@ -13,4 +13,26 @@
 // You should have received a copy of the GNU General Public License
 // along with Jiminy.  If not, see <http://www.gnu.org/licenses/>.
 
-// TODO: To delete. Workaround for CMake
+#pragma once
+
+#include <ostream>
+#include <memory>
+#include <vector>
+
+#include <SFML/Graphics.hpp>
+#include <Box2D/Box2D.h>
+
+class Entity;
+class Limb
+{
+public:
+    Limb(std::weak_ptr<Entity> entity, b2BodyDef bodyDef, b2FixtureDef fixtureDef, b2World &b2World);
+
+private:
+    std::vector<Limb> mArticulations; // TODO: Traduction ?
+    b2Body *mb2Body;
+    std::weak_ptr<Entity> mEntity;
+
+public:
+    friend std::ostream& operator<<(std::ostream &os, const Limb &l);
+};
