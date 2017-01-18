@@ -2,28 +2,17 @@
 #include <SFML/Graphics.hpp>
 #include <iostream>
 #include <string>
-#include "server.h"
+#include "Server.h"
+// #include "Shape.h"
 #include <thread> 
 #include <map>
-
-#include <fstream>
-#include <boost/archive/text_oarchive.hpp>
+#include <boost/bind.hpp>
 
 
-
-sf::Packet& operator <<(sf::Packet& packet, sf::RectangleShape& rect)
+Server::Server(){}
+Server::~Server(){}
+void Server::Listen()
 {
-    return packet << (int)rect.getSize().x << (int)rect.getSize().y;
-    
-}
-void clientListening(sf::TcpSocket& client);
-
-int main()
-{
-    int nbSocketCree=0;
-    sf::TcpListener listener;
-    std::map<int, sf::TcpSocket> client;
-
     // lie l'écouteur à un port
     if (listener.listen(5001) != sf::Socket::Done)
     {
@@ -38,16 +27,17 @@ int main()
             std::cerr << "Erreur 2 (main)" << std::endl;
             continue;
         }
-        std::thread threadSocket(clientListening, std::ref(client[nbSocketCree]));
+        std::thread threadSocket(boost::bind(&Server::clientListening, this, std::ref(client[nbSocketCree])));
         threadSocket.detach();//parceque join() c'est pour les faibles ;)
         nbSocketCree++;
     }
     std::cerr << "Vous êtes sorti d'un while(true), bravo !" << std::endl;
-    return 0;
 }
 
 
-void clientListening(sf::TcpSocket& client)
+
+
+void Server::clientListening(sf::TcpSocket& client)
 {
     sf::RectangleShape rectangle(sf::Vector2f(120, 50));
     sf::Packet packetReception;
@@ -62,15 +52,7 @@ void clientListening(sf::TcpSocket& client)
             break;
         }
         packetReception >> str;
-        //--------------------------------------- test serializable
-//         std::ofstream ofs("filename");
-//         {
-//         boost::archive::text_oarchive oa(ofs);
-//         oa << rectangle;
-//         packetEnvoie << oa;
-//         }   
-        
-        //---------------------------------------
+
         packetEnvoie << rectangle;
         if (client.send(packetEnvoie) != sf::Socket::Done){
             std::cerr << "Erreur transmission rectangle !" << std::endl;
@@ -79,20 +61,10 @@ void clientListening(sf::TcpSocket& client)
 }
 
 
-namespace boost {
-    namespace serialization {
-
-        template<class Archive>
-        void serialize(Archive & ar, sf::RectangleShape & r, const unsigned int version)
-        {
-            ar & r;
-        }
-
-    } // namespace serialization
-} // namespace boost
-
-
-
+sf::Packet& operator<<(sf::Packet& packet, sf::RectangleShape& rect)
+    {
+        return packet << (int)rect.getSize().x << (int)rect.getSize().y;
+    }
 
 
 
