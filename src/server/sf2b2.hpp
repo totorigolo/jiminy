@@ -25,12 +25,13 @@ constexpr float32 MPP = 1 / float32(PPM);
 
 inline sf::Vector2f convert(const b2Vec2 &b2Vec2)
 {
-    return {b2Vec2.x * PPM, b2Vec2.y * PPM};
+    return {b2Vec2.x * PPM, -b2Vec2.y * PPM};
 }
 
-inline b2Vec2 convert(const sf::Vector2f &sfVec2)
+template <typename T>
+inline b2Vec2 convert(const sf::Vector2<T> &sfVec2)
 {
-    return {sfVec2.x * MPP, sfVec2.y * MPP};
+    return {float(sfVec2.x) * MPP, -float(sfVec2.y) * MPP};
 }
 
 inline sf::Color convert(const b2Color& color)

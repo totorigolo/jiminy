@@ -10,11 +10,17 @@ set(SERVER_SRC
         Entity.hpp
         Entity.cpp
 
+        Brain.hpp
+        Brain.cpp
+
         Limb.hpp
         Limb.cpp
 
         DebugDraw.hpp
         DebugDraw.cpp
+
+        MouseJointCallback.hpp
+        MouseJointCallback.cpp
 
         sf2b2.hpp
 

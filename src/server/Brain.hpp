@@ -15,37 +15,26 @@
 
 #pragma once
 
-#include <vector>
-#include <memory>
-
-#include <SFML/Graphics/Color.hpp>
-
-#include "Brain.hpp"
-#include "Limb.hpp"
+#include <map>
+#include <string>
+#include <functional>
 
 
-class Entity
+class Brain
 {
 public:
-    Entity();
-
-    Entity(Entity const &) = delete;
-
-    Entity &operator=(Entity const &) = delete;
-
-    template<typename ... Args>
-    std::shared_ptr<Limb> CreateLimb(Args &&... args)
-    {
-        mLimbs.emplace_back(std::make_shared<Limb>(std::forward<Args>(args)...));
-        return mLimbs.back();
-    }
+    Brain();
 
     void Think();
 
-    // TODO: make mBrain private
-    Brain mBrain;
-
+    // TODO: Make mActions private
+    std::map<std::string, std::function<float(void)>> mInfo;
+    std::map<std::string, std::function<void(float)>> mActions;
 private:
-    sf::Color mColor; // = owner ?
-    std::vector<std::shared_ptr<Limb>> mLimbs;
+    float mPIDkP;
+    float mPIDkI;
+    float mPIDkD;
+    float mPIDpreviousError;
+    float mPIDintegral;
 };
+

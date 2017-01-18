@@ -21,11 +21,12 @@
 #include <atomic>
 
 
-class World;
 class Simulation
 {
 public:
     Simulation();
+    Simulation(Simulation const &) = delete;
+    Simulation &operator=(Simulation const &) = delete;
 
     virtual ~Simulation();
 

@@ -26,13 +26,24 @@ class Entity;
 class Limb
 {
 public:
-    Limb(std::weak_ptr<Entity> entity, b2BodyDef bodyDef, b2FixtureDef fixtureDef, b2World &b2World);
+    Limb(b2BodyDef bodyDef, b2FixtureDef fixtureDef, b2World *b2World);
 
-private:
-    std::vector<Limb> mArticulations; // TODO: Traduction ?
-    b2Body *mb2Body;
-    std::weak_ptr<Entity> mEntity;
+    friend class Entity; // TODO: Remove
 
 public:
-    friend std::ostream& operator<<(std::ostream &os, const Limb &l);
+    Limb(Limb const &) = delete;
+
+    Limb &operator=(Limb const &) = delete;
+
+    virtual ~Limb();
+
+public:
+    b2Body *mB2Body; // TODO: Make mB2Body private
+private:
+    b2World *mB2World;
+
+    std::vector<Limb> mArticulations; // TODO: Traduction ?
+
+public:
+    friend std::ostream &operator<<(std::ostream &os, const Limb &l);
 };

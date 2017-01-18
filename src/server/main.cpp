@@ -16,6 +16,8 @@
 
 #include <iostream>
 
+#include <Box2D/Box2D.h>
+
 #include "Simulation.hpp"
 
 
@@ -25,6 +27,8 @@ int main()
 
     try
     {
+        std::cout << "Box2D " << b2_version.major << "." << b2_version.minor << "." << b2_version.revision << std::endl;
+
         Simulation simulation;
         return simulation.run();
     }

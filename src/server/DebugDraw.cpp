@@ -18,13 +18,13 @@
 
 
 // Ctor
-DebugDraw::DebugDraw(b2World * b2World):
+DebugDraw::DebugDraw(b2World *b2World) :
         mb2World(b2World)
 {
-    //AppendFlags(b2Draw::e_aabbBit);
-    //AppendFlags(b2Draw::e_centerOfMassBit);
+//    AppendFlags(b2Draw::e_aabbBit);
+//    AppendFlags(b2Draw::e_centerOfMassBit);
     AppendFlags(b2Draw::e_jointBit);
-    //AppendFlags(b2Draw::e_pairBit);
+    AppendFlags(b2Draw::e_pairBit);
     AppendFlags(b2Draw::e_shapeBit);
 }
 
@@ -61,7 +61,7 @@ void DebugDraw::DrawCircle(const b2Vec2 &center, float32 radius, const b2Color &
     float r = radius * PPM - 1.f; // 1.f = bordure
     sf::CircleShape cs;
     cs.setRadius(r);
-    cs.setOutlineThickness(1.f);
+    cs.setOutlineThickness(10.f);
     cs.setOrigin(sf::Vector2f(r, r));
     cs.setOutlineColor(convert(color));
     cs.setFillColor(sf::Color::Transparent);

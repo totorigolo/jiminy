@@ -18,11 +18,14 @@
 #include <SFML/Graphics.hpp>
 #include <Box2D/Box2D.h>
 
-class DebugDraw : public b2Draw//, public NonCopyable
+
+class DebugDraw : public b2Draw
 {
 public:
     // Ctor
     DebugDraw(b2World *b2World);
+    DebugDraw(DebugDraw const &) = delete;
+    DebugDraw &operator=(DebugDraw const &) = delete;
 
     // Drawing
     virtual void DrawPolygon(const b2Vec2* vertices, int32 vertexCount, const b2Color& color);

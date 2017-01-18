@@ -15,37 +15,22 @@
 
 #pragma once
 
-#include <vector>
-#include <memory>
-
-#include <SFML/Graphics/Color.hpp>
-
-#include "Brain.hpp"
-#include "Limb.hpp"
+#include <Box2D/Box2D.h>
 
 
-class Entity
+class MouseJointCallback : public b2QueryCallback
 {
 public:
-    Entity();
+    MouseJointCallback(const b2Vec2 &point);
 
-    Entity(Entity const &) = delete;
+    bool ReportFixture(b2Fixture *fixture) override;
 
-    Entity &operator=(Entity const &) = delete;
+    const b2AABB &GetAABB() const;
 
-    template<typename ... Args>
-    std::shared_ptr<Limb> CreateLimb(Args &&... args)
-    {
-        mLimbs.emplace_back(std::make_shared<Limb>(std::forward<Args>(args)...));
-        return mLimbs.back();
-    }
-
-    void Think();
-
-    // TODO: make mBrain private
-    Brain mBrain;
+    b2Fixture* GetFixture() const;
 
 private:
-    sf::Color mColor; // = owner ?
-    std::vector<std::shared_ptr<Limb>> mLimbs;
+    b2AABB mAABB;
+    b2Vec2 mPoint;
+    b2Fixture *mFixture;
 };

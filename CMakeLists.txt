@@ -21,6 +21,7 @@ set(EXTRA_LIBS
         sfml-window
         sfml-graphics
         Box2D
+        boost_system
         )
 
 # Headers...

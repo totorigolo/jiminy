@@ -18,23 +18,33 @@
 
 #include "Limb.hpp"
 
+#include "Entity.hpp"
 
-Limb::Limb(std::weak_ptr<Entity> entity, b2BodyDef bodyDef, b2FixtureDef fixtureDef, b2World &b2World) :
-        mEntity(entity), mb2Body{b2World.CreateBody(&bodyDef)}
+
+Limb::Limb(b2BodyDef bodyDef, b2FixtureDef fixtureDef, b2World *b2World) :
+        mB2Body{b2World->CreateBody(&bodyDef)}, mB2World{b2World}
 {
     assert(fixtureDef.shape && "There must be a shape attached to the fixtureDef.");
+    assert(b2World && "The world can't be null.");
 
-    mb2Body->CreateFixture(&fixtureDef);
-    mb2Body->SetUserData(this);
+    mB2Body->CreateFixture(&fixtureDef);
+    mB2Body->SetUserData(this);
+}
+
+Limb::~Limb()
+{
+    assert(mB2World && mB2Body && "b2World and b2Body should not be null.");
+
+    mB2World->DestroyBody(mB2Body);
 }
 
 std::ostream &operator<<(std::ostream &os, const Limb &l)
 {
-    if (l.mb2Body)
+    if (l.mB2Body)
     {
-        os << "x = " << l.mb2Body->GetPosition().x << ", "
-           << "y = " << l.mb2Body->GetPosition().y << ", "
-           << "angle = " << l.mb2Body->GetAngle();
+        os << "x = " << l.mB2Body->GetPosition().x << ", "
+           << "y = " << l.mB2Body->GetPosition().y << ", "
+           << "angle = " << l.mB2Body->GetAngle();
     }
     return os;
 }

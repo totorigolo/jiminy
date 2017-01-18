@@ -28,6 +28,8 @@
 #include "DebugDraw.hpp"
 #include "Entity.hpp"
 #include "Limb.hpp"
+#include "sf2b2.hpp"
+#include "MouseJointCallback.hpp"
 
 
 using namespace std::chrono_literals;
@@ -82,52 +84,124 @@ bool Simulation::isSimulating() const
     return mSimulating;
 }
 
+void createB2Circle(b2World &world, const b2Vec2 &position, float radius)
+{
+    b2BodyDef bodyDef;
+    bodyDef.type = b2_dynamicBody;
+    bodyDef.position = position;
+    b2CircleShape boxShape;
+    boxShape.m_radius = radius;
+    b2FixtureDef fixtureDef;
+    fixtureDef.shape = &boxShape;
+    fixtureDef.density = 2.0f;
+    fixtureDef.friction = 0.3f;
+
+    world.CreateBody(&bodyDef)->CreateFixture(&fixtureDef);
+}
+
 void Simulation::simulate()
 {
     REPORT_BEGIN
 
     sf::RenderWindow window(sf::VideoMode(800, 600), "Window");
-    window.setFramerateLimit(30); // TODO: Better framerate control
+    window.setFramerateLimit(60); // TODO: Better framerate control
     sf::View view(window.getDefaultView());
+    view.zoom(10.f);
     window.setView(view);
-    float currentZoom{1.f};
+    float currentZoom{10.f};
 
     // Create things
-    b2Vec2 gravity(0.0f, 10.f);
+    b2Vec2 gravity(0.0f, -10.f);
     b2World world(gravity);
 
+    // The entities
+    std::shared_ptr<Entity> being{std::make_shared<Entity>()};
+    std::shared_ptr<Entity> worldEntity{std::make_shared<Entity>()};
+
     // Ground
-    b2BodyDef groundBodyDef;
-    groundBodyDef.position.Set(4.0f, 8.f);
-    b2Body *groundBody = world.CreateBody(&groundBodyDef);
-    b2PolygonShape groundBox;
-    groundBox.SetAsBox(6.0f, 0.02f);
-    b2FixtureDef groundFixtureDef;
-    groundFixtureDef.shape = &groundBox;
-    groundFixtureDef.restitution = 0.4f;
+    b2Body *ground{};
+    {
+        b2BodyDef groundBodyDef;
+        groundBodyDef.position.Set(0.0f, -40.f);
+        b2PolygonShape groundBox;
+        groundBox.SetAsBox(45.0f, 0.01f);
+        b2FixtureDef groundFixtureDef;
+        groundFixtureDef.shape = &groundBox;
+        groundFixtureDef.friction = 1.5f;
+        groundFixtureDef.restitution = 0.1f;
+        ground = worldEntity->CreateLimb(groundBodyDef, groundFixtureDef, &world)->mB2Body;
 
-    // Circle
-    b2BodyDef bodyDef;
-    bodyDef.type = b2_dynamicBody;
-    bodyDef.position.Set(4.0f, 0.0f);
-    b2CircleShape dynamicCircle;
-    dynamicCircle.m_p.Set(1.0f, 1.0f);
-    dynamicCircle.m_radius = 0.4f;
-    b2FixtureDef fixtureDef;
-    fixtureDef.shape = &dynamicCircle;
-    fixtureDef.density = 1.0f;
-    fixtureDef.friction = 0.3f;
+        groundBodyDef.position.Set(-40.0f, 0.f);
+        groundBox.SetAsBox(0.01f, 40.0f);
+        worldEntity->CreateLimb(groundBodyDef, groundFixtureDef, &world);
 
-    // Create limbs
-    std::shared_ptr<Entity> entity = std::make_shared<Entity>();
-    Limb ground{entity, groundBodyDef, groundFixtureDef, world};
-    Limb head{entity, bodyDef, fixtureDef, world};
+        groundBodyDef.position.Set(40.0f, 0.f);
+        groundBox.SetAsBox(0.01f, 40.0f);
+        worldEntity->CreateLimb(groundBodyDef, groundFixtureDef, &world);
+    }
 
+    // Being
+    {
+        // The base
+        b2BodyDef bodyDef;
+        bodyDef.type = b2_dynamicBody;
+        bodyDef.position.Set(4.0f, 1.0f);
+        bodyDef.fixedRotation = true;
+        b2PolygonShape boxShape;
+        boxShape.SetAsBox(3.f, 1.f);
+        b2FixtureDef fixtureDef;
+        fixtureDef.shape = &boxShape;
+        fixtureDef.density = 2.0f;
+        fixtureDef.friction = 0.9f;
+
+        std::shared_ptr<Limb> base{being->CreateLimb(bodyDef, fixtureDef, &world)};
+
+        // The arm
+        bodyDef.position.Set(4.0f, 0.f);
+        bodyDef.angle = 0.1f;
+        bodyDef.fixedRotation = false;
+        boxShape.SetAsBox(0.7f, 5.0f);
+        fixtureDef.density = 1.0f;
+
+        std::shared_ptr<Limb> arm{being->CreateLimb(bodyDef, fixtureDef, &world)};
+
+        // Join them
+        b2RevoluteJointDef jointDef;
+        jointDef.bodyA = base->mB2Body;
+        jointDef.bodyB = arm->mB2Body;
+        jointDef.localAnchorA = b2Vec2(0.f, 0.4f);
+        jointDef.localAnchorB = b2Vec2(0.f, -4.4f);
+        jointDef.collideConnected = false;
+        jointDef.enableMotor = true;
+        b2RevoluteJoint *joint = (b2RevoluteJoint *) world.CreateJoint(&jointDef);
+
+        // Register the available actions and info to the brain
+        being->mBrain.mActions["x."] = [&base](float force)
+        {
+            base->mB2Body->ApplyLinearImpulse(b2Vec2(force, 0), b2Vec2(0, 0), true);
+        };
+        being->mBrain.mActions["theta."] = [&joint](float speed)
+        {
+            joint->SetMotorSpeed(speed);
+        };
+        being->mBrain.mInfo["theta"] = [joint]()
+        {
+            return joint->GetJointAngle();
+        };
+        being->mBrain.mInfo["theta."] = [joint]() -> float
+        {
+            return joint->GetJointSpeed();
+        };
+    }
+
+    // Debug draw
     DebugDraw debugDraw(&world);
     debugDraw.SetRenderTarget(&window);
     world.SetDebugDraw(&debugDraw);
 
     // Loop
+    b2MouseJoint *mouseJoint{};
+    bool mouseJointCreated{false};
     sf::Vector2i prevMousePos{};
     while (isSimulating() && window.isOpen())
     {
@@ -135,8 +209,14 @@ void Simulation::simulate()
         sf::Event event;
         while (window.pollEvent(event))
         {
-            if (event.type == sf::Event::Closed)
+            // Exit
+            if (event.type == sf::Event::Closed ||
+                (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape))
                 window.close();
+
+            if (!window.hasFocus()) continue;
+
+            // Zoom
             if (event.type == sf::Event::MouseWheelScrolled)
             {
                 constexpr float zoomFactor = 1.2f;
@@ -144,17 +224,79 @@ void Simulation::simulate()
                 view.zoom((event.mouseWheelScroll.delta < 0) ? zoomFactor : 1.f / zoomFactor);
                 window.setView(view);
             }
-            if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::R)
+            else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::R)
             {
                 view = window.getDefaultView();
                 currentZoom = 1.f;
                 window.setView(view);
             }
+
+            // Random body creation
+            if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::C)
+            {
+                createB2Circle(world, convert(window.mapPixelToCoords(sf::Mouse::getPosition(window), view)), 2.f);
+            }
+
+            // Tests
+            if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::D)
+            {
+                being.reset();
+            }
+            else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::F)
+            {
+                worldEntity.reset();
+            }
         }
-        if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
+        if (window.hasFocus() && sf::Mouse::isButtonPressed(sf::Mouse::Middle))
         {
             view.move(sf::Vector2f(prevMousePos - sf::Mouse::getPosition(window)) * currentZoom);
             window.setView(view);
+        }
+        if (window.hasFocus())
+        {
+            if (sf::Mouse::isButtonPressed(sf::Mouse::Right)) // Create or update the mouse joint
+            {
+                b2Vec2 b2MousePos{convert(window.mapPixelToCoords(sf::Mouse::getPosition(window)))};
+
+                // If the join already exists, update the target position
+                if (mouseJointCreated)
+                {
+                    if (mouseJoint)
+                    {
+                        mouseJoint->SetTarget(b2MousePos);
+                    }
+                    else
+                    {
+                        mouseJointCreated = false;
+                    }
+                }
+                else // Search which body is under the mouse right now
+                {
+                    MouseJointCallback callback(b2MousePos);
+                    world.QueryAABB(&callback, callback.GetAABB());
+
+                    if (callback.GetFixture()) // Found something
+                    {
+                        b2Body *body = callback.GetFixture()->GetBody();
+                        b2MouseJointDef jointDef;
+                        jointDef.bodyA = ground; // Le body A ne sert pas, mais doit exister
+                        jointDef.bodyB = body; // Le body utilisé est le B
+                        jointDef.target = b2MousePos;
+                        jointDef.collideConnected = true;
+                        jointDef.maxForce = 100000000.f * body->GetMass();
+                        mouseJoint = (b2MouseJoint *) world.CreateJoint(&jointDef);
+                        mouseJointCreated = true;
+                    }
+                }
+            }
+            else if (mouseJointCreated) // Destroy the join
+            {
+                mouseJointCreated = false;
+                if (mouseJoint)
+                {
+                    world.DestroyJoint(mouseJoint);
+                }
+            }
         }
         prevMousePos = sf::Mouse::getPosition(window);
 
@@ -163,6 +305,8 @@ void Simulation::simulate()
         int32 velocityIterations = 6;
         int32 positionIterations = 2;
         world.Step(timeStep, velocityIterations, positionIterations);
+
+        being->Think();
 
         // Display
         window.clear(sf::Color::Black);
@@ -173,7 +317,7 @@ void Simulation::simulate()
     }
 
     mSimulating = false;
-    exit(0);
+//    exit(0);
 
     REPORT_END
 }
@@ -190,7 +334,7 @@ void Simulation::listenCommandLine()
         ss << line;
         ss >> action;
 
-        if (action == "quit")
+        if (action == "quit" || action == "q")
         {
             std::cout << "Bye !" << std::endl;
             mSimulating = false;

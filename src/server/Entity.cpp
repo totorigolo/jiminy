@@ -21,3 +21,13 @@ Entity::Entity() :
 {
 
 }
+
+void Entity::Think()
+{
+    mBrain.Think();
+
+//    for (auto &limb: mLimbs)
+//    {
+//        limb->mB2Body->ApplyTorque(0.1f, true);
+//    }
+}
