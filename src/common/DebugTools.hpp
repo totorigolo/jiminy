@@ -14,29 +14,23 @@
 // along with Jiminy.  If not, see <http://www.gnu.org/licenses/>.
 
 
-#include <iostream>
+#pragma once
 
-#include <Box2D/Box2D.h>
+#ifdef MAP
+#define REPORT_BEGIN std::cout << BLE "## Beggining of " << __PRETTY_FUNCTION__ << " ##" RESET << std::endl
+#define REPORT_END std::cout << JAU "## End of " << __PRETTY_FUNCTION__ << " ##" RESET << std::endl
 
-#include "Simulation.hpp"
+#ifdef MAP_EXTRA
+#define REPORT_BEGIN_EXTRA IF_MAP_DECLARER_DEBUT
+#define REPORT_END_EXTRA IF_MAP_DECLARER_FIN
+#else
+#define REPORT_BEGIN_EXTRA ;
+#define REPORT_END_EXTRA ;
+#endif
 
-
-int main()
-{
-    srand((unsigned int) (time(NULL)));
-
-    try
-    {
-        std::cout << "Box2D " << b2_version.major << "." << b2_version.minor << "." << b2_version.revision << std::endl;
-
-        Simulation simulation;
-        return simulation.run();
-    }
-    catch (std::exception e)
-    {
-        std::cerr << "An unhandled fatal exception just happened:" << std::endl;
-        std::cerr << e.what() << std::endl;
-    }
-
-    return 0;
-}
+#else
+#define REPORT_BEGIN ;
+#define REPORT_END ;
+#define REPORT_BEGIN_EXTRA ;
+#define REPORT_END_EXTRA ;
+#endif

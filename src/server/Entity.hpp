@@ -1,42 +1,51 @@
 // This file is part of Jiminy.
-//
+// 
 // Jiminy is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
-//
+// 
 // Jiminy is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
-//
+// 
 // You should have received a copy of the GNU General Public License
 // along with Jiminy.  If not, see <http://www.gnu.org/licenses/>.
 
+#pragma once
 
-#include <iostream>
+#include <vector>
+#include <memory>
 
-#include <Box2D/Box2D.h>
+#include <SFML/Graphics/Color.hpp>
 
-#include "Simulation.hpp"
+#include "Brain.hpp"
+#include "Limb.hpp"
 
 
-int main()
+class Entity
 {
-    srand((unsigned int) (time(NULL)));
+public:
+    Entity();
 
-    try
+    Entity(Entity const &) = delete;
+
+    Entity &operator=(Entity const &) = delete;
+
+    template<typename ... Args>
+    std::shared_ptr<Limb> CreateLimb(Args &&... args)
     {
-        std::cout << "Box2D " << b2_version.major << "." << b2_version.minor << "." << b2_version.revision << std::endl;
-
-        Simulation simulation;
-        return simulation.run();
-    }
-    catch (std::exception e)
-    {
-        std::cerr << "An unhandled fatal exception just happened:" << std::endl;
-        std::cerr << e.what() << std::endl;
+        mLimbs.emplace_back(std::make_shared<Limb>(std::forward<Args>(args)...));
+        return mLimbs.back();
     }
 
-    return 0;
-}
+    void Think();
+
+    // TODO: make mBrain private
+    Brain mBrain;
+
+private:
+    sf::Color mColor; // = owner ?
+    std::vector<std::shared_ptr<Limb>> mLimbs;
+};

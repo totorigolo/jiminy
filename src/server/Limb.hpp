@@ -1,42 +1,49 @@
 // This file is part of Jiminy.
-//
+// 
 // Jiminy is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
-//
+// 
 // Jiminy is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
-//
+// 
 // You should have received a copy of the GNU General Public License
 // along with Jiminy.  If not, see <http://www.gnu.org/licenses/>.
 
+#pragma once
 
-#include <iostream>
+#include <ostream>
+#include <memory>
+#include <vector>
 
+#include <SFML/Graphics.hpp>
 #include <Box2D/Box2D.h>
 
-#include "Simulation.hpp"
-
-
-int main()
+class Entity;
+class Limb
 {
-    srand((unsigned int) (time(NULL)));
+public:
+    Limb(b2BodyDef bodyDef, b2FixtureDef fixtureDef, b2World *b2World);
 
-    try
-    {
-        std::cout << "Box2D " << b2_version.major << "." << b2_version.minor << "." << b2_version.revision << std::endl;
+    friend class Entity; // TODO: Remove
 
-        Simulation simulation;
-        return simulation.run();
-    }
-    catch (std::exception e)
-    {
-        std::cerr << "An unhandled fatal exception just happened:" << std::endl;
-        std::cerr << e.what() << std::endl;
-    }
+public:
+    Limb(Limb const &) = delete;
 
-    return 0;
-}
+    Limb &operator=(Limb const &) = delete;
+
+    virtual ~Limb();
+
+public:
+    b2Body *mB2Body; // TODO: Make mB2Body private
+private:
+    b2World *mB2World;
+
+    std::vector<Limb> mArticulations; // TODO: Traduction ?
+
+public:
+    friend std::ostream &operator<<(std::ostream &os, const Limb &l);
+};

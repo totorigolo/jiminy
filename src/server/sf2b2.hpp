@@ -13,21 +13,30 @@
 // You should have received a copy of the GNU General Public License
 // along with Jiminy.  If not, see <http://www.gnu.org/licenses/>.
 
-#include "Entity.hpp"
+#pragma once
+
+#include <SFML/System/Vector2.hpp>
+#include <Box2D/Common/b2Math.h>
 
 
-Entity::Entity() :
-    mColor{sf::Uint8(rand() % 256), sf::Uint8(rand() % 256), sf::Uint8(rand() % 256)}
+// Conversion : Meter <-> Pixel
+constexpr int PPM = 100;
+constexpr float32 MPP = 1 / float32(PPM);
+
+inline sf::Vector2f convert(const b2Vec2 &b2Vec2)
 {
-
+    return {b2Vec2.x * PPM, -b2Vec2.y * PPM};
 }
 
-void Entity::Think()
+template <typename T>
+inline b2Vec2 convert(const sf::Vector2<T> &sfVec2)
 {
-    mBrain.Think();
+    return {float(sfVec2.x) * MPP, -float(sfVec2.y) * MPP};
+}
 
-//    for (auto &limb: mLimbs)
-//    {
-//        limb->mB2Body->ApplyTorque(0.1f, true);
-//    }
+inline sf::Color convert(const b2Color& color)
+{
+    return sf::Color(static_cast<sf::Uint8>(color.r * 255.f),
+                     static_cast<sf::Uint8>(color.g * 255.f),
+                     static_cast<sf::Uint8>(color.b * 255.f));
 }
