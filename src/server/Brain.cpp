@@ -22,10 +22,11 @@
 
 
 Brain::Brain() :
+        mIteration(0),
+        mSimulated(false),
         mQ(arma::zeros<arma::mat>(91, 201)), // theta, x
         mS(45),
-        mA(100),
-        mSimulated(false)
+        mA(100)
 {
 //    for (int i = 0; i < 401; ++i)
 //    {
@@ -38,6 +39,8 @@ Brain::Brain() :
     mlpack::data::Load("Q.csv", mQ);
 
 //    mQ = arma::randg<arma::mat>(91, 201, arma::distr_param(2, 1));// + 15.f;
+
+//    mQ += 1.f;
 }
 
 Brain::~Brain()
@@ -63,22 +66,22 @@ Brain::~Brain()
 //    }
 }
 
-float stotheta(const arma::uword &s)
+constexpr float stotheta(const arma::uword &s)
 {
     return 2.f * float(s) - 90.f;
 }
 
-arma::uword thetatos(float theta)
+constexpr arma::uword thetatos(float theta)
 {
     return (arma::uword) (theta + 90) / 2;
 }
 
-float sgn(float a)
+constexpr float sgn(float a)
 {
     return (a < 0) ? -1.f : 1.f;
 }
 
-bool absorb(const arma::uword &s)
+constexpr bool absorb(const arma::uword &s)
 {
     float theta = stotheta(s);
     return abs(theta) > 70;
@@ -88,32 +91,32 @@ float r(float theta)//const arma::uword &s)
 {
 //    float theta = -stotheta(s);
     theta -= 1;
-    float r = 1.f - abs(theta) / 40.f;//2.f;
+    float r = 1.f - abs(theta) / 6.f;//2.f;
     if (r < 0)
     {
 //        r /= 10.f;
     }
     else
     {
-        r *= r;
+        r = (r * r) * 30.f;
     }
     return r;
 //    return -abs(theta) / 40.f + 1.f;
 }
 
 template<typename T>
-T min(T a, T b)
+constexpr T min(T a, T b)
 {
     return (a < b) ? a : b;
 }
 
 template<typename T>
-T max(T a, T b)
+constexpr T max(T a, T b)
 {
     return (a > b) ? a : b;
 }
 
-float mod_theta(float theta)
+constexpr float mod_theta(float theta)
 {
     while (theta <= 0)
     {
@@ -139,12 +142,12 @@ void Brain::Think()
 //    mActions["x."](force);
 
     std::cout << '\r';
+    std::cout << "#" << std::setw(9) << ++mIteration << ", ";
 
     static constexpr float gamma = 0.99f;
-    static constexpr float alpha = 1.1f;
+    static constexpr float alpha = 0.1f;
 
-    float theta = mInfo["theta"]() * (180.f / b2_pi);
-    theta = mod_theta(theta);
+    const float theta = mod_theta(mInfo["theta"]() * (180.f / b2_pi));
     std::cout << "th=" << std::setw(9) << theta << ", ";
 
 //    if (!absorb(mS))
@@ -163,24 +166,35 @@ void Brain::Think()
     std::cout << "F=" << std::setw(9) << force << ", ";
 
     // Observe S'
-    arma::uword sp = thetatos(theta);
-    sp = min(max(sp, arma::uword(0)), arma::uword(90));
-
+    const arma::uword sp = min(max(thetatos(theta), arma::uword(0)), arma::uword(90));
     std::cout << "sp=" << std::setw(4) << sp << ", ";
 
     // a' <- argmax(Q(s',a))
-    arma::uword ap = (arma::uword) mQ.row(sp).index_max();
-
+    const arma::uword ap = (arma::uword) mQ.row(sp).index_max();
     std::cout << "ap=" << std::setw(4) << ap << ", ";
 
     // Q(s,a) <- Q(s,a) + alpha * (R(s') + gamma*Q(s',a') - Q(s,a))
-    float rS = r(theta);//r(sp);
-    std::cout << "R=" << std::setw(9) << rS << ", ";
-    float DQ = alpha * (rS + gamma * mQ(sp, ap) - mQ(mS, mA));
-    std::cout << "Q=" << std::setw(9) << mQ(sp, ap) << ", ";
-    std::cout << "DQ=" << std::setw(9) << DQ << ", ";
-    mQ(mS, mA) += DQ;
-    mQ(mS, mA) = min(max(mQ(mS, mA), -100.), 100.);
+//    float rS = r(theta);//r(sp);
+//    std::cout << "R=" << std::setw(9) << rS << ", ";
+//    float DQ = alpha * (rS + gamma * mQ(sp, ap) - mQ(mS, mA));
+//    std::cout << "Q=" << std::setw(9) << mQ(sp, ap) << ", ";
+//    std::cout << "DQ=" << std::setw(9) << DQ << ", ";
+//    mQ(mS, mA) += DQ;
+//    mQ(mS, mA) = min(max(mQ(mS, mA), -300.), 300.);
+
+    mLearningQueue.push({mS, mA});
+    if (mLearningQueue.size() > 20.f)
+    {
+        auto state(mLearningQueue.front());
+        mLearningQueue.pop();
+        float rS = r(theta);//r(sp);
+        std::cout << "R=" << std::setw(9) << rS << ", ";
+        float DQ = alpha * (rS + gamma * mQ(mS, mA) - mQ(state.s, state.a));
+        std::cout << "Q=" << std::setw(9) << mQ(state.s, state.a) << ", ";
+        std::cout << "DQ=" << std::setw(9) << DQ << ", ";
+        mQ(state.s, state.a) += DQ;
+        mQ(state.s, state.a) = min(max(mQ(state.s, state.a), -1000.), 1000.);
+    }
 
     mS = sp;
     mA = ap;
@@ -193,7 +207,7 @@ void Brain::Think()
 void Brain::ThinkOld()
 {
     float theta = mInfo["theta"]() * (180.f / b2_pi);// + 90.f;
-    float thetaP = mInfo["theta."]();
+//    float thetaP = mInfo["theta."]();
     float x = mInfo["x"]();
 
     float force = -6.f * theta - 20.f * x * ((abs(x) > 30) ? 1 : 0);

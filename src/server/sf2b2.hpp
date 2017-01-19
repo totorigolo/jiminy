@@ -40,3 +40,39 @@ inline sf::Color convert(const b2Color& color)
                      static_cast<sf::Uint8>(color.g * 255.f),
                      static_cast<sf::Uint8>(color.b * 255.f));
 }
+
+inline sf::Vector2f u2f(sf::Vector2u vec)
+{
+    return sf::Vector2f(static_cast<float>(vec.x), static_cast<float>(vec.y));
+}
+inline sf::Vector2i u2i(sf::Vector2u vec)
+{
+    return sf::Vector2i(static_cast<int>(vec.x), static_cast<int>(vec.y));
+}
+inline sf::Vector2u f2u(sf::Vector2f vec)
+{
+    return sf::Vector2u(static_cast<unsigned int>(vec.x), static_cast<unsigned int>(vec.y));
+}
+inline sf::Vector2i f2i(sf::Vector2f vec)
+{
+    return sf::Vector2i(static_cast<int>(vec.x), static_cast<int>(vec.y));
+}
+inline sf::Vector2f i2f(sf::Vector2i vec)
+{
+    return sf::Vector2f(static_cast<float>(vec.x), static_cast<float>(vec.y));
+}
+inline sf::Vector2u i2u(sf::Vector2i vec)
+{
+    return sf::Vector2u(static_cast<unsigned int>(vec.x), static_cast<unsigned int>(vec.y));
+}
+
+template<typename T>
+sf::Vector2<T> operator*(sf::Vector2<T> a, sf::Vector2<T> b)
+{
+    return sf::Vector2<T>(a.x * b.x, a.y * b.y);
+}
+template<typename T>
+sf::Vector2<T> operator/(sf::Vector2<T> a, sf::Vector2<T> b)
+{
+    return sf::Vector2<T>(a.x / b.x, a.y / b.y);
+}

@@ -15,12 +15,24 @@
 
 #pragma once
 
-#include <map>
-#include <string>
 #include <functional>
+#include <string>
+#include <queue>
+#include <map>
 
 #include <mlpack/core.hpp>
 
+
+struct SnapLearn
+{
+//    float theta;
+//    arma::uword s;
+//    arma::uword a;
+    arma::uword s;
+    arma::uword a;
+};
+
+using learning_queue = std::queue<SnapLearn>;
 
 class Brain
 {
@@ -30,15 +42,18 @@ public:
     virtual ~Brain();
 
     void Think();
+
     void ThinkOld();
 
     // TODO: Make mActions private
     std::map<std::string, std::function<float(void)>> mInfo;
     std::map<std::string, std::function<void(float)>> mActions;
 private:
+    unsigned long long int mIteration;
     bool mSimulated;
     arma::mat mQ;
     arma::uword mS;
     arma::uword mA;
+    learning_queue mLearningQueue;
 };
 
