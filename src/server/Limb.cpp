@@ -21,7 +21,7 @@
 #include "Entity.hpp"
 
 
-Limb::Limb(b2BodyDef bodyDef, b2FixtureDef fixtureDef, b2World *b2World) :
+Limb::Limb(b2BodyDef bodyDef, b2FixtureDef fixtureDef, std::shared_ptr<b2World> b2World) :
         mB2Body{b2World->CreateBody(&bodyDef)}, mB2World{b2World}
 {
     assert(fixtureDef.shape && "There must be a shape attached to the fixtureDef.");
@@ -33,9 +33,13 @@ Limb::Limb(b2BodyDef bodyDef, b2FixtureDef fixtureDef, b2World *b2World) :
 
 Limb::~Limb()
 {
-    assert(mB2World && mB2Body && "b2World and b2Body should not be null.");
+    assert(!mB2World.expired() && mB2Body && "b2World and b2Body should not be null.");
 
-    mB2World->DestroyBody(mB2Body);
+    auto world(mB2World.lock());
+    if (world)
+    {
+        world->DestroyBody(mB2Body);
+    }
 }
 
 std::ostream &operator<<(std::ostream &os, const Limb &l)

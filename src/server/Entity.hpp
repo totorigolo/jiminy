@@ -33,6 +33,8 @@ public:
 
     Entity &operator=(Entity const &) = delete;
 
+    virtual ~Entity() = default;
+
     template<typename ... Args>
     std::shared_ptr<Limb> CreateLimb(Args &&... args)
     {

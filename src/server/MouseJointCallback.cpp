@@ -20,7 +20,7 @@ MouseJointCallback::MouseJointCallback(const b2Vec2& point) :
 {
     mFixture = nullptr;
 
-    // Create the AABB
+    // Create a tiny AABB
     b2Vec2 d(0.001f, 0.001f);
     mAABB.lowerBound = mPoint - d;
     mAABB.upperBound = mPoint + d;

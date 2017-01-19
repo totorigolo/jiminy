@@ -26,7 +26,7 @@ class Entity;
 class Limb
 {
 public:
-    Limb(b2BodyDef bodyDef, b2FixtureDef fixtureDef, b2World *b2World);
+    Limb(b2BodyDef bodyDef, b2FixtureDef fixtureDef, std::shared_ptr<b2World> b2World);
 
     friend class Entity; // TODO: Remove
 
@@ -40,7 +40,7 @@ public:
 public:
     b2Body *mB2Body; // TODO: Make mB2Body private
 private:
-    b2World *mB2World;
+    std::weak_ptr<b2World> mB2World;
 
     std::vector<Limb> mArticulations; // TODO: Traduction ?
 

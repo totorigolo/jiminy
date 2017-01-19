@@ -19,22 +19,26 @@
 #include <string>
 #include <functional>
 
+#include <mlpack/core.hpp>
+
 
 class Brain
 {
 public:
     Brain();
 
+    virtual ~Brain();
+
     void Think();
+    void ThinkOld();
 
     // TODO: Make mActions private
     std::map<std::string, std::function<float(void)>> mInfo;
     std::map<std::string, std::function<void(float)>> mActions;
 private:
-    float mPIDkP;
-    float mPIDkI;
-    float mPIDkD;
-    float mPIDpreviousError;
-    float mPIDintegral;
+    bool mSimulated;
+    arma::mat mQ;
+    arma::uword mS;
+    arma::uword mA;
 };
 

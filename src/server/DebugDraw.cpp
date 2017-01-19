@@ -18,8 +18,8 @@
 
 
 // Ctor
-DebugDraw::DebugDraw(b2World *b2World) :
-        mb2World(b2World)
+DebugDraw::DebugDraw(std::shared_ptr<b2World> b2World) :
+        mEnabled{true}, mb2World(b2World)
 {
 //    AppendFlags(b2Draw::e_aabbBit);
 //    AppendFlags(b2Draw::e_centerOfMassBit);
@@ -31,7 +31,7 @@ DebugDraw::DebugDraw(b2World *b2World) :
 // Dessin
 void DebugDraw::DrawPolygon(const b2Vec2 *vertices, int32 vertexCount, const b2Color &color)
 {
-    if (!mTarget) return;
+    if (!mEnabled || !mTarget) return;
 
     sf::Color c = convert(color);
     sf::VertexArray va(sf::LinesStrip, vertexCount + 1U);
@@ -49,14 +49,14 @@ void DebugDraw::DrawPolygon(const b2Vec2 *vertices, int32 vertexCount, const b2C
 
 void DebugDraw::DrawSolidPolygon(const b2Vec2 *vertices, int32 vertexCount, const b2Color &color)
 {
-    if (!mTarget) return;
+    if (!mEnabled || !mTarget) return;
 
     DrawPolygon(vertices, vertexCount, color);
 }
 
 void DebugDraw::DrawCircle(const b2Vec2 &center, float32 radius, const b2Color &color)
 {
-    if (!mTarget) return;
+    if (!mEnabled || !mTarget) return;
 
     float r = radius * PPM - 1.f; // 1.f = bordure
     sf::CircleShape cs;
@@ -72,7 +72,7 @@ void DebugDraw::DrawCircle(const b2Vec2 &center, float32 radius, const b2Color &
 
 void DebugDraw::DrawSolidCircle(const b2Vec2 &center, float32 radius, const b2Vec2 &axis, const b2Color &color)
 {
-    if (!mTarget) return;
+    if (!mEnabled || !mTarget) return;
 
     DrawCircle(center, radius, color);
     DrawSegment(center, center + radius * axis, color);
@@ -80,7 +80,7 @@ void DebugDraw::DrawSolidCircle(const b2Vec2 &center, float32 radius, const b2Ve
 
 void DebugDraw::DrawSegment(const b2Vec2 &p1, const b2Vec2 &p2, const b2Color &color)
 {
-    if (!mTarget) return;
+    if (!mEnabled || !mTarget) return;
 
     sf::Color c = convert(color);
     sf::VertexArray va(sf::Lines, 2U);
@@ -95,7 +95,7 @@ void DebugDraw::DrawSegment(const b2Vec2 &p1, const b2Vec2 &p2, const b2Color &c
 
 void DebugDraw::DrawTransform(const b2Transform &xf)
 {
-    if (!mTarget) return;
+    if (!mEnabled || !mTarget) return;
 
     b2Vec2 p1 = xf.p, p2;
     const float32 k_axisScale = 0.4f;
@@ -108,7 +108,7 @@ void DebugDraw::DrawTransform(const b2Transform &xf)
 
 void DebugDraw::DrawPoint(const b2Vec2 &p, const b2Color &color)
 {
-    if (!mTarget) return;
+    if (!mEnabled || !mTarget) return;
 
     // Affichage d'un disque
     sf::CircleShape cs;
@@ -121,8 +121,11 @@ void DebugDraw::DrawPoint(const b2Vec2 &p, const b2Color &color)
 
 void DebugDraw::DrawContacts()
 {
+    auto b2World(mb2World.lock());
+    if (!mEnabled || !b2World) return;
+
     // Récupère les contacts
-    b2Contact *contact = mb2World->GetContactList();
+    b2Contact *contact = b2World->GetContactList();
 
     // Affiche les contacts
     for (; contact; contact = contact->GetNext())
@@ -164,3 +167,19 @@ void DebugDraw::DrawContacts()
         }
     }
 }
+
+void DebugDraw::Enable(bool enable)
+{
+    mEnabled = enable;
+}
+
+void DebugDraw::Disable()
+{
+    mEnabled = false;
+}
+
+bool DebugDraw::Enabled()
+{
+    return mEnabled;
+}
+

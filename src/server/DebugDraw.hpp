@@ -23,7 +23,7 @@ class DebugDraw : public b2Draw
 {
 public:
     // Ctor
-    DebugDraw(b2World *b2World);
+    DebugDraw(std::shared_ptr<b2World> b2World);
     DebugDraw(DebugDraw const &) = delete;
     DebugDraw &operator=(DebugDraw const &) = delete;
 
@@ -44,12 +44,17 @@ public:
 
     void DrawContacts();
 
+    void Enable(bool enable = true);
+    void Disable();
+    bool Enabled();
+
     // Accessors
     void SetRenderTarget(sf::RenderTarget *target) { mTarget = target; }
     sf::RenderTarget* GetRenderTarget() { return mTarget; }
     const sf::RenderTarget* GetRenderTarget() const { return mTarget; }
 
 private:
-    b2World *mb2World;
+    bool mEnabled;
+    std::weak_ptr<b2World> mb2World;
     sf::RenderTarget *mTarget;
 };

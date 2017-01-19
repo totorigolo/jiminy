@@ -19,8 +19,6 @@
 
 int main(int argc, char *argv[])
 {
-    srand((unsigned int) (time(NULL)));
-
     std::cout << "Hello, Jiminy!" << std::endl;
 
     return 0;

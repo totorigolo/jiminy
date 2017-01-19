@@ -20,6 +20,8 @@
 #include <thread>
 #include <atomic>
 
+#include <Box2D/Box2D.h>
+
 
 class Simulation
 {
@@ -34,11 +36,14 @@ public:
 
     bool isSimulating() const;
 
+    std::shared_ptr<b2World> GetB2World();
+
 private:
     void simulate();
     void listenCommandLine();
 
 private:
+    std::shared_ptr<b2World> mB2World;
     std::atomic_bool mSimulating;
 
     std::unique_ptr<std::thread> mSimulationThread;
