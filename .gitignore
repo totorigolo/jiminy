@@ -4,3 +4,8 @@ cmake-build-debug/
 UML/pdf/
 cmake_install.cmake
 CMakeFiles
+PDF/
+*.jld
+*.csv
+films/
+sav_Q/

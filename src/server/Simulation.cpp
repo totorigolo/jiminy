@@ -34,6 +34,8 @@
 using namespace std::chrono_literals;
 
 
+#define ANGLE_INIT (0.1f * (float(rand() % 200) / 100.f - 1.f))
+
 Simulation::Simulation()
         : mSimulating{false},
           mSimulationThread{}, mCommandLineThread{}
@@ -116,9 +118,13 @@ void Simulation::simulate()
     float currentZoom{10.f};
 
     bool again;
+    unsigned long long int iterations;
+    unsigned long long int generation{0};
+    constexpr unsigned long long int NB_MAX_ITER = 50'000;
     do
     {
         again = false;
+        iterations = 0;
 
         // Create things
         b2Vec2 gravity(0.0f, -10.f);
@@ -144,7 +150,7 @@ void Simulation::simulate()
             groundFixtureDef.restitution = 0.1f;
             ground = worldEntity->CreateLimb(groundBodyDef, groundFixtureDef, mB2World)->mB2Body;
 
-            groundBodyDef.position.Set(-35.0f, roomHeight);
+            groundBodyDef.position.Set(-45.0f, roomHeight);
             worldEntity->CreateLimb(groundBodyDef, groundFixtureDef, mB2World);
 
             groundFixtureDef.restitution = 1.6f;
@@ -166,23 +172,24 @@ void Simulation::simulate()
             // The base
             b2BodyDef bodyDef;
             bodyDef.type = b2_dynamicBody;
-            bodyDef.position.Set(4.0f, 1.0f);
+            bodyDef.position.Set(4.0f, -15.0f);
             bodyDef.fixedRotation = true;
             b2PolygonShape boxShape;
             boxShape.SetAsBox(3.f, 1.f);
             b2FixtureDef fixtureDef;
             fixtureDef.shape = &boxShape;
-            fixtureDef.density = 1.0f;
+            fixtureDef.density = 0.5f;
             fixtureDef.friction = 1.f;
 
             base = being->CreateLimb(bodyDef, fixtureDef, mB2World);
 
             // The arm
-            bodyDef.position.Set(4.0f, 0.f);
-//        bodyDef.angle = 0.1f;
+            bodyDef.position.Set(4.0f, -16.f);
+            bodyDef.angle = ANGLE_INIT;
+            std::cout << "angle initial = " << bodyDef.angle << std::endl;
             bodyDef.fixedRotation = false;
             boxShape.SetAsBox(0.7f, 5.0f);
-            fixtureDef.density = 1.0f;
+            fixtureDef.density = 0.4f;
 
             arm = being->CreateLimb(bodyDef, fixtureDef, mB2World);
 
@@ -225,6 +232,10 @@ void Simulation::simulate()
             {
                 return base->mB2Body->GetPosition().x;
             };
+            being->mBrain.mInfo["x."] = [&base]() -> float
+            {
+                return base->mB2Body->GetLinearVelocity().Length();
+            };
         };
 
         // Debug draw
@@ -236,8 +247,26 @@ void Simulation::simulate()
         b2MouseJoint *mouseJoint{};
         bool mouseJointCreated{false};
         sf::Vector2i prevMousePos{};
-        while (!again && isSimulating() && window.isOpen())
+        while (isSimulating() && window.isOpen())
         {
+            if (++iterations > NB_MAX_ITER)
+            {
+                again = true;
+            }
+
+            if (being->mBrain.Failed() || again)
+            {
+                base->mB2Body->SetLinearVelocity(b2Vec2(0, 0));
+                arm->mB2Body->SetLinearVelocity(b2Vec2(0, 0));
+                base->mB2Body->SetTransform(b2Vec2(4.f, -15.f), 0.f);
+                arm->mB2Body->SetTransform(b2Vec2(4.f, -16.f), ANGLE_INIT);
+                being->mBrain.Reseted();
+                iterations = 0;
+                std::cout << "\nGeneration (a=" << arm->mB2Body->GetTransform().q.GetAngle() << ") : " << ++generation
+                          << std::endl;
+                again = false;
+            }
+
             // Events
             sf::Event event;
             while (window.pollEvent(event))
@@ -294,7 +323,7 @@ void Simulation::simulate()
                 }
                 if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::U)
                 {
-                    again = true;
+                    being->mBrain.Save();
                 }
 
                 // Random body creation
@@ -376,11 +405,14 @@ void Simulation::simulate()
             being->Think();
 
             // Display
-            window.clear(sf::Color::Black);
+            if (debugDraw.Enabled())
+            {
+                window.clear(sf::Color::Black);
 
-            if (debugDraw.Enabled()) mB2World->DrawDebugData();
+                mB2World->DrawDebugData();
 
-            window.display();
+                window.display();
+            }
         }
     } while (again);
 

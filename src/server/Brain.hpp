@@ -17,22 +17,27 @@
 
 #include <functional>
 #include <string>
-#include <queue>
+#include <list>
 #include <map>
 
 #include <mlpack/core.hpp>
+#include <armadillo>
 
+
+constexpr arma::uword NB_S_THETA{120};
+constexpr arma::uword NB_S_THETA_P{41};
+constexpr arma::uword NB_A{101};
+
+constexpr size_t learning_offset = 60;
 
 struct SnapLearn
 {
-//    float theta;
-//    arma::uword s;
-//    arma::uword a;
-    arma::uword s;
+    arma::uword s_theta;
+    arma::uword s_thetaP;
     arma::uword a;
 };
 
-using learning_queue = std::queue<SnapLearn>;
+using learning_queue = std::list<SnapLearn>;
 
 class Brain
 {
@@ -41,19 +46,31 @@ public:
 
     virtual ~Brain();
 
+    void Save() const;
+
     void Think();
 
     void ThinkOld();
+
+    bool Failed() const;
+
+    void Reseted();
 
     // TODO: Make mActions private
     std::map<std::string, std::function<float(void)>> mInfo;
     std::map<std::string, std::function<void(float)>> mActions;
 private:
+
+    arma::uword thetaPtos(float thetaP);
+
     unsigned long long int mIteration;
     bool mSimulated;
-    arma::mat mQ;
-    arma::uword mS;
+    arma::cube::fixed<NB_S_THETA, NB_A, NB_S_THETA_P> mQ;
+    arma::vec mTP;
+    arma::uword mS_theta;
+    arma::uword mS_thetaP;
     arma::uword mA;
     learning_queue mLearningQueue;
+    bool mFailed;
 };
 
