@@ -29,6 +29,7 @@
 #include "Limb.hpp"
 #include "sf2b2.hpp"
 #include "MouseJointCallback.hpp"
+#include "Brain_ContinuousQLearning.hpp"
 
 
 using namespace std::chrono_literals;
@@ -110,7 +111,7 @@ void Simulation::simulate()
     REPORT_BEGIN
 
     sf::RenderWindow window(sf::VideoMode(800, 600), "Window");
-    window.setFramerateLimit(60); // TODO: Better framerate control
+    window.setFramerateLimit(1); // TODO: Better framerate control
     bool limitFramerate{true};
     sf::View view(window.getDefaultView());
     view.zoom(10.f);
@@ -131,7 +132,7 @@ void Simulation::simulate()
         mB2World = std::make_shared<b2World>(gravity);
 
         // The entities
-        std::shared_ptr<Entity> being{std::make_shared<Entity>()};
+        std::shared_ptr<Entity> being{std::make_shared<Entity>(new Brain_ContinuousQLearning)};
         std::shared_ptr<Entity> worldEntity{std::make_shared<Entity>()};
 
         // Ground
@@ -207,32 +208,32 @@ void Simulation::simulate()
             b2RevoluteJoint *joint = (b2RevoluteJoint *) mB2World->CreateJoint(&jointDef);
 
             // Register the available actions and info to the brain
-            being->mBrain.mActions["x.."] = [&base](float force)
+            being->mBrain->mActions["x.."] = [&base](float force)
             {
                 base->mB2Body->ApplyLinearImpulse(b2Vec2(force, 0), b2Vec2(0, 0), true); // * GetMass()
 //            base->mB2Body->SetLinearVelocity(b2Vec2(base->mB2Body->GetLinearVelocity().x, 0));
             };
-            being->mBrain.mActions["x."] = [&base](float speed)
+            being->mBrain->mActions["x."] = [&base](float speed)
             {
                 base->mB2Body->SetLinearVelocity(b2Vec2(speed, 0));
             };
-            being->mBrain.mActions["theta."] = [&joint](float speed)
+            being->mBrain->mActions["theta."] = [&joint](float speed)
             {
                 joint->SetMotorSpeed(speed);
             };
-            being->mBrain.mInfo["theta"] = [joint]()
+            being->mBrain->mInfo["theta"] = [joint]()
             {
                 return joint->GetJointAngle();
             };
-            being->mBrain.mInfo["theta."] = [joint]() -> float
+            being->mBrain->mInfo["theta."] = [joint]() -> float
             {
                 return joint->GetJointSpeed();
             };
-            being->mBrain.mInfo["x"] = [&base]() -> float
+            being->mBrain->mInfo["x"] = [&base]() -> float
             {
                 return base->mB2Body->GetPosition().x;
             };
-            being->mBrain.mInfo["x."] = [&base]() -> float
+            being->mBrain->mInfo["x."] = [&base]() -> float
             {
                 return base->mB2Body->GetLinearVelocity().Length();
             };
@@ -254,13 +255,13 @@ void Simulation::simulate()
                 again = true;
             }
 
-            if (being->mBrain.Failed() || again)
+            if (being->mBrain->Failed() || again)
             {
                 base->mB2Body->SetLinearVelocity(b2Vec2(0, 0));
                 arm->mB2Body->SetLinearVelocity(b2Vec2(0, 0));
                 base->mB2Body->SetTransform(b2Vec2(4.f, -15.f), 0.f);
                 arm->mB2Body->SetTransform(b2Vec2(4.f, -16.f), ANGLE_INIT);
-                being->mBrain.Reseted();
+                being->mBrain->Reseted();
                 iterations = 0;
                 std::cout << "\nGeneration (a=" << arm->mB2Body->GetTransform().q.GetAngle() << ") : " << ++generation
                           << std::endl;
@@ -306,7 +307,7 @@ void Simulation::simulate()
                 if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::L)
                 {
                     limitFramerate = !limitFramerate;
-                    window.setFramerateLimit(limitFramerate ? 60 : 0);
+                    window.setFramerateLimit(limitFramerate ? 1 : 60);
                 }
                 else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::M)
                 {
@@ -323,7 +324,7 @@ void Simulation::simulate()
                 }
                 if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::U)
                 {
-                    being->mBrain.Save();
+                    being->Save();
                 }
 
                 // Random body creation

@@ -12,6 +12,10 @@ set(SERVER_SRC
 
         Brain.hpp
         Brain.cpp
+        Brain_DiscretQLearning.hpp
+        Brain_DiscretQLearning.cpp
+        Brain_ContinuousQLearning.hpp
+        Brain_ContinuousQLearning.cpp
 
         Limb.hpp
         Limb.cpp
@@ -23,6 +27,7 @@ set(SERVER_SRC
         MouseJointCallback.cpp
 
         sf2b2.hpp
+        utils.hpp
 
         PARENT_SCOPE
 )

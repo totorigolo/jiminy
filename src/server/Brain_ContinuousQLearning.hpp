@@ -23,32 +23,36 @@
 #include <mlpack/core.hpp>
 #include <armadillo>
 
+#include "Brain.hpp"
+#include "gnuplot-iostream.h"
 
-class Brain
+
+class Brain_ContinuousQLearning : public Brain
 {
+    static constexpr size_t learning_offset = 700;
+    using learning_queue = std::list<arma::uword>;
+
+    static const arma::uword DIM_S{5};
+    static const arma::uword NB_A{80};
 
 public:
-    Brain();
+    Brain_ContinuousQLearning();
 
-    virtual ~Brain();
+    virtual ~Brain_ContinuousQLearning();
 
-    virtual void Think();
+    virtual void Save() const override;
 
-    virtual void Save() const;
-
-    virtual bool Failed() const;
-
-    virtual void Reseted();
+    virtual void Reseted() override;
 
 protected:
-    virtual void think() = 0;
+    virtual void think() override;
 
-    // TODO: Make mActions private
-public:
-    std::map<std::string, std::function<float(void)>> mInfo;
-    std::map<std::string, std::function<void(float)>> mActions;
-protected:
-    unsigned long long int mIteration;
-    bool mSimulated;
-    bool mFailed;
+private:
+    Gnuplot mGP;
+    arma::mat mTheta;
+    arma::mat mS;
+    arma::uword mA;
+
+    learning_queue mLearningQueue;
 };
+

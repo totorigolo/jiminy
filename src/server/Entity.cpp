@@ -14,20 +14,33 @@
 // along with Jiminy.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "Entity.hpp"
+#include "Brain.hpp"
 
 
-Entity::Entity() :
-    mColor{sf::Uint8(rand() % 256), sf::Uint8(rand() % 256), sf::Uint8(rand() % 256)}
+Entity::Entity(Brain *brain) :
+        mBrain(brain),
+        mColor{sf::Uint8(rand() % 256), sf::Uint8(rand() % 256), sf::Uint8(rand() % 256)}
 {
 
 }
 
+Entity::~Entity()
+{
+    delete mBrain;
+}
+
 void Entity::Think()
 {
-    mBrain.Think();
+    if (mBrain)
+    {
+        mBrain->Think();
+    }
+}
 
-//    for (auto &limb: mLimbs)
-//    {
-//        limb->mB2Body->ApplyTorque(0.1f, true);
-//    }
+void Entity::Save()
+{
+    if (mBrain)
+    {
+        mBrain->Save();
+    }
 }

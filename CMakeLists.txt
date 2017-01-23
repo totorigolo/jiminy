@@ -22,6 +22,8 @@ set(EXTRA_LIBS
         sfml-graphics
         Box2D
         boost_system
+        boost_iostreams
+        boost_filesystem
         mlpack
         armadillo
         )

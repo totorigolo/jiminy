@@ -20,7 +20,7 @@
 
 #include <SFML/Graphics/Color.hpp>
 
-#include "Brain.hpp"
+#include "Brain_DiscretQLearning.hpp"
 #include "Limb.hpp"
 
 

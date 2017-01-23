@@ -15,41 +15,46 @@
 
 #pragma once
 
-#include <vector>
-#include <memory>
 
-#include <SFML/Graphics/Color.hpp>
-
-#include "Limb.hpp"
-
-
-class Brain;
-class Entity
+template<typename T>
+constexpr T min(T a, T b)
 {
-public:
-    Entity(Brain *brain = nullptr);
+    return (a < b) ? a : b;
+}
 
-    Entity(Entity const &) = delete;
+template<typename T>
+constexpr T max(T a, T b)
+{
+    return (a > b) ? a : b;
+}
 
-    Entity &operator=(Entity const &) = delete;
+template<typename T>
+constexpr T enbounds(T a, T mini, T maxi)
+{
+    return min(max(a, mini), maxi);
+}
 
-    virtual ~Entity();
+template<typename T>
+constexpr T sgn(T a)
+{
+    return (a < 0) ? T(-1) : T(1);
+}
 
-    template<typename ... Args>
-    std::shared_ptr<Limb> CreateLimb(Args &&... args)
+constexpr float mod_theta(float theta)
+{
+    while (theta <= 0)
     {
-        mLimbs.emplace_back(std::make_shared<Limb>(std::forward<Args>(args)...));
-        return mLimbs.back();
+        theta += 360;
+    }
+    while (theta > 360)
+    {
+        theta -= 360;
     }
 
-    void Think();
+    if (theta > 180)
+    {
+        theta -= 360;
+    }
 
-    void Save();
-
-    // TODO: make mBrain private
-    Brain *mBrain;
-
-private:
-    sf::Color mColor; // = owner ?
-    std::vector<std::shared_ptr<Limb>> mLimbs;
-};
+    return theta;
+}
