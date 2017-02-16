@@ -35,6 +35,7 @@
 using namespace std::chrono_literals;
 
 
+//#define ANGLE_INIT 0.05f//(0.1f * (float(rand() % 200) / 100.f - 1.f))
 #define ANGLE_INIT (0.1f * (float(rand() % 200) / 100.f - 1.f))
 
 Simulation::Simulation()

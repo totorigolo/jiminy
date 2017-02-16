@@ -24,64 +24,97 @@
 #include "utils.hpp"
 
 
+static const arma::uword NB_A{80};
+namespace
+{
+    enum StateElem : arma::uword
+    {
+        CONSTANT,
+        PHI,
+        ABS_PHI,
+        PHI_P,
+        ABS_PHI_P,
+        ABS_X,
+        X_P,
+        ABS_X_P,
+        DIM_S
+    };
+}
+
 Brain_ContinuousQLearning::Brain_ContinuousQLearning() :
         mTheta(arma::zeros<arma::mat>(NB_A, DIM_S)),
         mS(arma::zeros<arma::vec>(DIM_S)),
-        mA(NB_A / 2),
-        mGP()
+        mA(NB_A / 2)
 {
 //    mQ.load("Q.jld", arma::file_type::arma_ascii);
 
-    mTheta = arma::randu < arma::mat > (NB_A, DIM_S) * 1. - 0.5;
+    do
+    {
+//        mTheta = arma::randu < arma::mat > (NB_A, DIM_S) * 1. - 0.5;
+    } while (rand() % 100 < 80);
 }
 
 Brain_ContinuousQLearning::~Brain_ContinuousQLearning()
 {
-    Save();
+    onSave();
+    mGP_theta << "exit\n";
+    mGP_theta.flush();
+    mGP_Q << "exit\n";
+    mGP_Q.flush();
 }
 
-void Brain_ContinuousQLearning::Save() const
+void Brain_ContinuousQLearning::onSave() const
 {
     if (mSimulated)
     {
         mlpack::data::Save("theta.csv", mTheta);
-
-//        mQ.save("Q.jld", arma::file_type::arma_ascii);
-//        std::cout << "\nSaved." << std::endl;
-//
-//        for (arma::uword i = 0; i < NB_S_THETA_P; ++i)
-//        {
-//            std::stringstream filename;
-//            filename << "Q" << std::setw(2) << std::setfill('0') << i << ".csv";
-//            mlpack::data::Save(filename.str(), mQ.slice(i));
-//        }
-
-        std::cout << "Saved." << std::endl;
     }
 }
 
-static constexpr bool absorb(float theta, float x)
+static inline bool absorb(const arma::vec &s)
 {
-    return abs(theta) > 80.f || abs(x) > 180.f;
+    return abs(s(PHI)) > 80.f;// || abs(s(X)) > 180.f;
 }
 
-static double r(const arma::vec &sp)
+static inline double r(const arma::vec &sp)
 {
-    const double &theta(sp(0));
-    const double &thetaP(sp(1));
-    const double &x(sp(2));
-    const double &xP(sp(3));
+    const double &phi(sp(PHI));
+    const double &phiP(sp(PHI_P));
+    const double &xP(sp(X_P));
+    const double &abs_x(sp(ABS_X));
 
-    if (abs(theta) < 0.5f && abs(thetaP) < 0.1f && abs(xP) < 0.1f) return 10.;
-    double tp_surplus = max(1. - abs(thetaP), 0.) / 2.;
+    if (abs(phi) < 0.5f && abs(phiP) < 0.1f && abs(xP) < 0.1f) return 10.;
+    double pp_surplus = max(1. - abs(phiP), 0.) / 2.;
     double xp_surplus = max(4. - abs(xP), 0.) / 3.;
-    double theta_r = 1. - abs(theta) / 5.;
-    double x_r = (1. - abs(x) / 180.) * 0.1f;
-    return x_r + theta_r + tp_surplus + xp_surplus;
+    double phi_r = 1. - abs(phi) / 5.;
+    double x_r = (1. - abs_x / 180.) * 0.1f;
+    return x_r + phi_r + pp_surplus + xp_surplus;
+
+//    return max(1. - abs(phi) / 6., -0.1) / 4.;
 }
 
-void Brain_ContinuousQLearning::think()
+void Brain_ContinuousQLearning::onThink()
 {
+    // Observe S'
+    arma::vec sp(getS());
+//    sp = arma::normalise(sp);
+
+    // Calculate a'
+    arma::vec Q(mTheta * mS);
+    arma::uword ap(Q.index_max());
+    std::cout << Q.max();
+
+    // Learning
+    const double alpha(0.0001);
+    const double gamma(0.00099);
+    //                          dQ/dt           R(s')              <max_a'(Q(a',s'))> - Q
+//    mTheta.row(mA) += alpha * mTheta.row(mA) * (r(sp) + gamma * (mTheta * sp).max() - Q);
+    for (arma::uword i_s = 0; i_s < DIM_S; ++i_s)
+    {
+        mTheta(mA, i_s) += alpha * sp(i_s) * (r(sp) + gamma * (mTheta * sp).max() - Q(i_s));
+    }
+    mTheta = arma::normalise(mTheta);
+
     // Execute A
     float force = (float(mA) - float(NB_A / 2)) / 2.f;
     if (mA <= 3 || mA >= NB_A - 3)
@@ -90,50 +123,14 @@ void Brain_ContinuousQLearning::think()
     }
     mActions["x.."](force);
 
-    mGP << "splot " << mGP.file2d(mTheta) << "with lines title 'theta'\n";
-    mGP.flush();
-
-//    std::cout << std::setw(4) << mA << '|'
-//              << std::setw(9) << mS(1)
-//              << std::setw(11) << mS(2)
-//              << std::setw(9) << mS(3)
-//              << std::setw(9) << mS(4) << '|';
-
-    // Observe S'
-    const float theta = mod_theta(mInfo["theta"]() * (180.f / b2_pi));
-    const float thetaP = mInfo["theta."]();
-    const float x = mInfo["x"]();
-    const float xP = mInfo["x."]();
-    arma::vec sp({1, theta, thetaP, x, xP});
-
-    // Calculate a'
-    arma::vec Q(mTheta * mS);
-    arma::uword ap(Q.index_max());
-//    std::cout << std::setw(4) << ap << '|'
-//              << std::setw(9) << theta
-//              << std::setw(11) << thetaP
-//              << std::setw(9) << x
-//              << std::setw(9) << xP;
-
-    // Learning
-    const double alpha(0.0001);
-    const double gamma(0.00099);
-    //                          dQ/dt           R(s')           < max_a'(Q(a',s'))    > - Q
-//    mTheta.row(mA) += alpha * mTheta.row(mA) * (r(sp) + gamma * (mTheta * sp).max() - Q);
-    for (arma::uword i_s = 0; i_s < DIM_S; ++i_s)
-    {
-        mTheta(mA, i_s) += alpha * mTheta(mA, i_s) * (r(sp) + gamma * (mTheta * sp).max() - Q(i_s));
-    }
-    mTheta = arma::normalise(mTheta);
-
-
 //    for (auto it = mLearningQueue.crbegin(); it != mLearningQueue.crend(); ++it)
 //    {
 //        arma::uword a(*it);
 //        for (arma::uword i_s = 0; i_s < DIM_S; ++i_s)
 //        {
-//            mTheta(a, i_s) += alpha * mTheta(a, i_s) * (r(sp) + gamma * (mTheta * sp).max() - Q(i_s));
+//            mTheta(mA, i_s) += alpha * sp(i_s) * (r(sp) + gamma * (mTheta * sp).max() - Q(i_s));
 //        }
+//        mTheta = arma::normalise(mTheta);
 //    }
 //
 //    mLearningQueue.push_back(ap);
@@ -147,21 +144,35 @@ void Brain_ContinuousQLearning::think()
     mA = ap;
 
     // Is this state final ?
-    if (absorb(theta, x))
+    if (absorb(sp))
     {
         mFailed = true;
     }
+
+    // GNU Plot
+    mGP_theta << "splot '-' with lines title 'theta'\n";
+    mGP_theta.send2d(mTheta);
+    mGP_theta.flush();
+    mGP_Q << "plot '-' with lines title 'Q'\n";
+    mGP_Q.send1d(Q);
+    mGP_Q.flush();
 }
 
-void Brain_ContinuousQLearning::Reseted()
+void Brain_ContinuousQLearning::onReseted()
 {
-    Brain::Reseted();
     mLearningQueue.clear();
 
-    const float theta = mod_theta(mInfo["theta"]() * (180.f / b2_pi));
-    const float thetaP = mInfo["theta."]();
+    mS = getS();
+    mA = NB_A / 2;
+}
+
+arma::vec Brain_ContinuousQLearning::getS()
+{
+    const float phi = mod_theta(mInfo["theta"]() * (180.f / b2_pi));
+    const float phiP = mInfo["theta."]();
     const float x = mInfo["x"]();
     const float xP = mInfo["x."]();
-    arma::vec mS({1, theta, thetaP, x, xP});
-    mA = NB_A / 2;
+    return {1, phi, abs(phi), phiP, abs(phiP), abs(x), xP, abs(xP)};
+//    return {1, phi};
+//    return {phi};
 }

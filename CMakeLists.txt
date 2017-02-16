@@ -10,7 +10,7 @@ set(CMAKE_CXX_STANDARD 14)
 
 # g++ flags
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pipe -Wpointer-arith -Winit-self -Wl,-O1 -Wl,--discard-all -Wl,--no-undefined")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O3")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Og -g")
 #set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -Werror")
 
 # Dependancies

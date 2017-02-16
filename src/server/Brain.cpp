@@ -31,7 +31,6 @@ Brain::Brain() :
 
 Brain::~Brain()
 {
-    Save();
 }
 
 void Brain::Think()
@@ -39,14 +38,15 @@ void Brain::Think()
     mSimulated = true;
     std::cout << "\r#" << std::setw(7) << ++mIteration << ", ";
 
-    think();
+    onThink();
 
     std::cout << std::flush;
 }
 
 void Brain::Save() const
 {
-    // TODO: Rendre cette méthode virtuelle pure
+    this->onSave();
+    std::cout << "Saved." << std::endl;
 }
 
 bool Brain::Failed() const
@@ -58,4 +58,5 @@ void Brain::Reseted()
 {
     mFailed = false;
     mIteration = 0;
+    this->onReseted();
 }

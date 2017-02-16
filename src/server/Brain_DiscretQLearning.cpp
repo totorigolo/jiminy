@@ -37,17 +37,16 @@ Brain_DiscretQLearning::Brain_DiscretQLearning() :
 
 Brain_DiscretQLearning::~Brain_DiscretQLearning()
 {
-    Save();
+    onSave();
 }
 
-void Brain_DiscretQLearning::Save() const
+void Brain_DiscretQLearning::onSave() const
 {
     if (mSimulated)
     {
         mlpack::data::Save("TP.csv", mTP);
 
         mQ.save("Q.jld", arma::file_type::arma_ascii);
-        std::cout << "\nSaved." << std::endl;
 
         for (arma::uword i = 0; i < NB_S_THETA_P; ++i)
         {
@@ -96,7 +95,7 @@ static double r(float theta, float thetaP, float x, float xP)
     return x_r + theta_r + tp_surplus + xp_surplus;
 }
 
-void Brain_DiscretQLearning::think()
+void Brain_DiscretQLearning::onThink()
 {
     mSimulated = true;
 
@@ -238,8 +237,7 @@ void Brain_DiscretQLearning::ThinkOld()
 //    mActions["theta."](thetaP);
 }
 
-void Brain_DiscretQLearning::Reseted()
+void Brain_DiscretQLearning::onReseted()
 {
-    Brain::Reseted();
     mLearningQueue.clear();
 }

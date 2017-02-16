@@ -32,23 +32,25 @@ class Brain_ContinuousQLearning : public Brain
     static constexpr size_t learning_offset = 700;
     using learning_queue = std::list<arma::uword>;
 
-    static const arma::uword DIM_S{5};
-    static const arma::uword NB_A{80};
-
 public:
     Brain_ContinuousQLearning();
 
     virtual ~Brain_ContinuousQLearning();
 
-    virtual void Save() const override;
-
-    virtual void Reseted() override;
-
 protected:
-    virtual void think() override;
+    virtual void onSave() const override;
+
+    virtual void onReseted() override;
+
+    virtual void onThink() override;
 
 private:
-    Gnuplot mGP;
+    arma::vec getS();
+
+private:
+    Gnuplot mGP_theta;
+    Gnuplot mGP_Q;
+
     arma::mat mTheta;
     arma::mat mS;
     arma::uword mA;

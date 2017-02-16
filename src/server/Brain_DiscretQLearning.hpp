@@ -48,14 +48,12 @@ public:
 
     virtual ~Brain_DiscretQLearning();
 
-    virtual void Save() const override;
-
     void ThinkOld();
 
-    virtual void Reseted() override;
-
 protected:
-    virtual void think() override;
+    virtual void onThink() override;
+    virtual void onSave() const override;
+    virtual void onReseted() override;
 
 private:
     static inline float stotheta(const arma::uword &s);

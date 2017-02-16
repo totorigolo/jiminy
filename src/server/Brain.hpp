@@ -32,16 +32,18 @@ public:
 
     virtual ~Brain();
 
-    virtual void Think();
+    virtual void Think() final;
 
-    virtual void Save() const;
+    virtual void Save() const final;
 
-    virtual bool Failed() const;
+    virtual bool Failed() const final;
 
-    virtual void Reseted();
+    virtual void Reseted() final;
 
 protected:
-    virtual void think() = 0;
+    virtual void onThink() = 0;
+    virtual void onSave() const = 0;
+    virtual void onReseted() = 0;
 
     // TODO: Make mActions private
 public:
